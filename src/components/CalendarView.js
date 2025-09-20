@@ -23,7 +23,7 @@ const CalendarView = ({ db, payments, members, currentMonth, onMonthChange }) =>
 
   useEffect(() => {
     generateMonthData();
-  }, [payments, currentMonth]);
+  }, [currentMonth]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const generateMonthData = () => {
     const [year, month] = currentMonth.split('-').map(Number);

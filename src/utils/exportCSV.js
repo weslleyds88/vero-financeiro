@@ -63,13 +63,10 @@ export const exportMonthlySummaryToCSV = (summaryData, month) => {
   downloadCSV(csvContent, `resumo-mensal-${month}.csv`);
 };
 
-const getStatusLabel = (status) => {
-  const statusMap = {
-    'pending': 'Pendente',
-    'paid': 'Pago',
-    'expense': 'Despesa'
-  };
-  return statusMap[status] || status;
+const statusMap = {
+  'pending': 'Pendente',
+  'paid': 'Pago',
+  'expense': 'Despesa'
 };
 
 const downloadCSV = (csvContent, filename) => {

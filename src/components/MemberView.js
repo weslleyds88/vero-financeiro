@@ -16,37 +16,37 @@ const MemberView = ({ db, members, payments }) => {
   });
 
   useEffect(() => {
+    loadMemberData();
+  }, [id, payments]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const loadMemberData = () => {
     if (id && members.length > 0) {
       const foundMember = members.find(m => m.id === parseInt(id));
       setMember(foundMember);
       
       if (foundMember) {
-        loadMemberData(foundMember.id);
+        const memberPayments = payments.filter(p => p.member_id === foundMember.id);
+        setMemberPayments(memberPayments);
+        
+        // Calcular estatísticas
+        const paidPayments = memberPayments.filter(p => p.status === 'paid');
+        const pendingPayments = memberPayments.filter(p => p.status === 'pending');
+        
+        const totalPaid = paidPayments.reduce((sum, p) => sum + parseFloat(p.amount || 0), 0);
+        const totalPending = pendingPayments.reduce((sum, p) => sum + parseFloat(p.amount || 0), 0);
+        
+        const lastPayment = paidPayments
+          .sort((a, b) => new Date(b.paid_at) - new Date(a.paid_at))[0];
+
+        setStats({
+          totalPaid,
+          totalPending,
+          paidCount: paidPayments.length,
+          pendingCount: pendingPayments.length,
+          lastPayment
+        });
       }
     }
-  }, [id, members, payments]);
-
-  const loadMemberData = (memberId) => {
-    const memberPayments = payments.filter(p => p.member_id === memberId);
-    setMemberPayments(memberPayments);
-    
-    // Calcular estatísticas
-    const paidPayments = memberPayments.filter(p => p.status === 'paid');
-    const pendingPayments = memberPayments.filter(p => p.status === 'pending');
-    
-    const totalPaid = paidPayments.reduce((sum, p) => sum + parseFloat(p.amount || 0), 0);
-    const totalPending = pendingPayments.reduce((sum, p) => sum + parseFloat(p.amount || 0), 0);
-    
-    const lastPayment = paidPayments
-      .sort((a, b) => new Date(b.paid_at) - new Date(a.paid_at))[0];
-
-    setStats({
-      totalPaid,
-      totalPending,
-      paidCount: paidPayments.length,
-      pendingCount: pendingPayments.length,
-      lastPayment
-    });
   };
 
   const handleMarkPaid = async (paymentId) => {

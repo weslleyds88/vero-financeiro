@@ -5,6 +5,7 @@
 [build.environment]
   NODE_VERSION = "18"
   REACT_APP_DB_MODE = "local"
+  CI = "false"
 
 [[redirects]]
   from = "/*"

@@ -1,6 +1,6 @@
 import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
-import { formatDate, formatCurrency } from './dateUtils';
+import { formatDate } from './dateUtils';
 
 export const exportMembersToXLSX = (members) => {
   const ws_data = [
@@ -16,9 +16,6 @@ export const exportMembersToXLSX = (members) => {
   
   const wb = XLSX.utils.book_new();
   const ws = XLSX.utils.aoa_to_sheet(ws_data);
-  
-  // Formatação das colunas
-  const range = XLSX.utils.decode_range(ws['!ref']);
   ws['!cols'] = [
     { width: 8 },   // ID
     { width: 25 },  // Nome
