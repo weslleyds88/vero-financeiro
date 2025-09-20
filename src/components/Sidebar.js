@@ -64,10 +64,10 @@ const Sidebar = () => {
   ];
 
   return (
-    <div className="fixed left-0 top-0 h-full w-64 bg-white dark:bg-gray-800 shadow-lg border-r border-gray-200 dark:border-gray-700 z-30">
-      <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-        <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">Despesas Vero</h1>
-        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Vero Volei</p>
+    <div className="fixed left-0 top-0 h-full w-64 bg-white shadow-lg border-r border-gray-200 z-30">
+      <div className="p-6 border-b border-gray-200">
+        <h1 className="text-xl font-bold text-gray-900">Despesas Vero</h1>
+        <p className="text-sm text-gray-500 mt-1">Vero Volei</p>
       </div>
       
       <nav className="mt-6">
@@ -78,8 +78,8 @@ const Sidebar = () => {
                 to={item.path}
                 className={`flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-200 ${
                   location.pathname === item.path
-                    ? 'bg-primary-100 dark:bg-primary-900 text-primary-700 dark:text-primary-300 border-r-2 border-primary-600'
-                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-gray-100'
+                    ? 'bg-primary-100 text-primary-700 border-r-2 border-primary-600'
+                    : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
                 }`}
               >
                 {item.icon}
@@ -90,8 +90,8 @@ const Sidebar = () => {
         </ul>
       </nav>
 
-      <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200 dark:border-gray-700">
-        <div className="text-xs text-gray-500 dark:text-gray-400 text-center">
+      <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200">
+        <div className="text-xs text-gray-500 text-center">
           <p>Despesas Vero v1.0.0</p>
           <p className="mt-1">© 2024 Vero Volei</p>
         </div>
