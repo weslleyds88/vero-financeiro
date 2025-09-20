@@ -53,8 +53,7 @@ const MemberView = ({ db, members, payments }) => {
     const success = await db.markPaid(paymentId);
     if (success) {
       // Recarregar dados após marcar como pago
-      const updatedPayments = await db.listPayments();
-      loadMemberData(member.id);
+      loadMemberData();
     } else {
       alert('Erro ao marcar pagamento como pago');
     }

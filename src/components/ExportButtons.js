@@ -1,6 +1,15 @@
 import React, { useState } from 'react';
-import { exportToCSV } from '../utils/exportCSV';
-import { exportToXLSX } from '../utils/exportXLSX';
+import { 
+  exportMembersToCSV, 
+  exportPaymentsToCSV, 
+  exportMonthlySummaryToCSV 
+} from '../utils/exportCSV';
+import { 
+  exportMembersToXLSX, 
+  exportPaymentsToXLSX, 
+  exportMonthlySummaryToXLSX,
+  exportBackupToXLSX 
+} from '../utils/exportXLSX';
 
 const ExportButtons = ({ members, payments, db, showBackup = true, currentMonth = null }) => {
   const [isExporting, setIsExporting] = useState(false);
