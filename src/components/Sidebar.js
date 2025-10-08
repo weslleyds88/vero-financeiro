@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 
-const Sidebar = () => {
+const Sidebar = ({ isAdmin, onLogout }) => {
   const location = useLocation();
 
   const menuItems = [
@@ -91,7 +91,42 @@ const Sidebar = () => {
       </nav>
 
       <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200">
-        <div className="text-xs text-gray-500 text-center">
+        <div className="mb-4">
+          <div className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
+            isAdmin
+              ? 'bg-green-100 text-green-800'
+              : 'bg-blue-100 text-blue-800'
+          }`}>
+            {isAdmin ? (
+              <>
+                <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+                </svg>
+                Modo Admin
+              </>
+            ) : (
+              <>
+                <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+                  <path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd" />
+                </svg>
+                Modo Visualização
+              </>
+            )}
+          </div>
+        </div>
+
+        <button
+          onClick={onLogout}
+          className="w-full flex items-center justify-center px-3 py-2 bg-red-50 hover:bg-red-100 text-red-600 hover:text-red-700 rounded-lg text-sm font-medium transition-colors duration-200"
+        >
+          <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+          </svg>
+          Sair
+        </button>
+
+        <div className="text-xs text-gray-500 text-center mt-3">
           <p>Despesas Vero v1.0.0</p>
           <p className="mt-1">© 2024 Vero Volei</p>
         </div>
