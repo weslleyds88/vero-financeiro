@@ -7,10 +7,17 @@ const Members = ({ db, members, onRefresh, isAdmin }) => {
   const [editingMember, setEditingMember] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
 
-  const filteredMembers = members.filter(member =>
-    member.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (member.phone && member.phone.includes(searchTerm))
-  );
+  const [sortOrder, setSortOrder] = useState('asc'); // 'asc' ou 'desc'
+
+  const sortedAndFilteredMembers = filteredMembers.sort((a, b) => {
+    const nameA = a.name.toLowerCase();
+    const nameB = b.name.toLowerCase();
+    if (sortOrder === 'asc') {
+      return nameA.localeCompare(nameB);
+    } else {
+      return nameB.localeCompare(nameA);
+    }
+  });
 
   const handleAddMember = () => {
     if (!isAdmin) {
@@ -74,13 +81,23 @@ const Members = ({ db, members, onRefresh, isAdmin }) => {
       <div className="space-y-6">
         <div className="flex justify-between items-center">
           <h2 className="text-2xl font-bold text-gray-900">Atletas</h2>
-          <button
-            onClick={handleAddMember}
-            disabled={!isAdmin}
-            className={`btn ${isAdmin ? 'btn-primary' : 'btn-secondary opacity-50 cursor-not-allowed'}`}
-          >
-            {isAdmin ? 'Novo Atleta' : 'Modo Visualização'}
-          </button>
+          <div className="flex items-center space-x-3">
+            <button
+              onClick={handleAddMember}
+              disabled={!isAdmin}
+              className={`btn ${isAdmin ? 'btn-primary' : 'btn-secondary opacity-50 cursor-not-allowed'}`}
+            >
+              {isAdmin ? 'Novo Atleta' : 'Modo Visualização'}
+            </button>
+            <select
+              value={sortOrder}
+              onChange={(e) => setSortOrder(e.target.value)}
+              className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+            >
+              <option value="asc">A-Z ↑</option>
+              <option value="desc">Z-A ↓</option>
+            </select>
+          </div>
         </div>
 
         <div className="relative">
@@ -94,13 +111,13 @@ const Members = ({ db, members, onRefresh, isAdmin }) => {
             placeholder="Buscar atleta..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="input"
+            className="input pl-10"
           />
         </div>
       </div>
 
       <div className="card">
-        {filteredMembers.length > 0 ? (
+        {sortedAndFilteredMembers.length > 0 ? (
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
@@ -123,7 +140,7 @@ const Members = ({ db, members, onRefresh, isAdmin }) => {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {filteredMembers.map((member) => (
+                {sortedAndFilteredMembers.map((member) => (
                   <tr key={member.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">

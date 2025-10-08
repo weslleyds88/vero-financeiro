@@ -22,43 +22,23 @@ const Payments = ({ db, members, payments, filters, onFiltersChange, onRefresh, 
 
   useEffect(() => {
     applyFilters();
-  }, [payments, filters]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [payments, filters]);
 
-  const applyFilters = () => {
-    // Filtrar apenas pagamentos de atletas (que têm member_id)
-    let filtered = payments.filter(p => p.member_id && p.status !== 'expense' && p.status !== 'partial');
+  const [sortOrder, setSortOrder] = useState('asc'); // 'asc' ou 'desc'
 
-    // No modo visualização, mostrar apenas pagamentos do próprio atleta
-    if (!isAdmin) {
-      // Para modo visualização, precisamos de uma forma de identificar o atleta atual
-      // Por ora, vamos permitir ver todos os pagamentos (como solicitado)
-      // Mas podemos adicionar lógica para filtrar por atleta específico depois
+  const sortedAndFilteredPayments = filteredPayments.sort((a, b) => {
+    // Ordenar primeiro por nome do atleta, depois por data
+    const memberA = members.find(m => m.id === a.member_id);
+    const memberB = members.find(m => m.id === b.member_id);
+    const nameA = memberA ? memberA.name.toLowerCase() : '';
+    const nameB = memberB ? memberB.name.toLowerCase() : '';
+
+    if (sortOrder === 'asc') {
+      return nameA.localeCompare(nameB);
+    } else {
+      return nameB.localeCompare(nameA);
     }
-
-    if (filters.member_id) {
-      filtered = filtered.filter(p => p.member_id === parseInt(filters.member_id));
-    }
-
-    if (filters.status) {
-      filtered = filtered.filter(p => p.status === filters.status);
-    }
-
-    if (filters.category) {
-      filtered = filtered.filter(p => p.category === filters.category);
-    }
-
-    // Filtrar por mês/ano
-    if (filters.month) {
-      filtered = filtered.filter(p => {
-        if (!p.due_date) return false;
-        const date = new Date(p.due_date);
-        return date.getMonth() === filters.month.month && 
-               date.getFullYear() === filters.month.year;
-      });
-    }
-
-    setFilteredPayments(filtered);
-  };
+  });
 
   const handleAddPayment = () => {
     if (!isAdmin) {
@@ -301,19 +281,17 @@ const Payments = ({ db, members, payments, filters, onFiltersChange, onRefresh, 
             </select>
           </div>
 
-          {/* Limpar Filtros */}
-          <div className="flex items-end">
-            <button
-              onClick={() => onFiltersChange({
-                member_id: '',
-                status: '',
-                category: '',
-                month: getCurrentMonthObj()
-              })}
-              className="btn btn-secondary w-full"
+          {/* Ordenação Alfabética */}
+          <div>
+            <label className="label">Ordenação</label>
+            <select
+              value={sortOrder}
+              onChange={(e) => setSortOrder(e.target.value)}
+              className="input"
             >
-              Limpar Filtros
-            </button>
+              <option value="asc">A-Z ↑</option>
+              <option value="desc">Z-A ↓</option>
+            </select>
           </div>
         </div>
       </div>
@@ -350,7 +328,7 @@ const Payments = ({ db, members, payments, filters, onFiltersChange, onRefresh, 
 
       {/* Lista de Pagamentos */}
       <div className="card">
-        {filteredPayments.length > 0 ? (
+        {sortedAndFilteredPayments.length > 0 ? (
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
@@ -388,7 +366,7 @@ const Payments = ({ db, members, payments, filters, onFiltersChange, onRefresh, 
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {filteredPayments.map((payment) => (
+                {sortedAndFilteredPayments.map((payment) => (
                   <tr key={payment.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <input
