@@ -22,7 +22,43 @@ const Payments = ({ db, members, payments, filters, onFiltersChange, onRefresh, 
 
   useEffect(() => {
     applyFilters();
-  }, [payments, filters]);
+  }, [payments, filters]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const applyFilters = () => {
+    // Filtrar apenas pagamentos de atletas (que têm member_id)
+    let filtered = payments.filter(p => p.member_id && p.status !== 'expense' && p.status !== 'partial');
+
+    // No modo visualização, mostrar apenas pagamentos do próprio atleta
+    if (!isAdmin) {
+      // Para modo visualização, precisamos de uma forma de identificar o atleta atual
+      // Por ora, vamos permitir ver todos os pagamentos (como solicitado)
+      // Mas podemos adicionar lógica para filtrar por atleta específico depois
+    }
+
+    if (filters.member_id) {
+      filtered = filtered.filter(p => p.member_id === parseInt(filters.member_id));
+    }
+
+    if (filters.status) {
+      filtered = filtered.filter(p => p.status === filters.status);
+    }
+
+    if (filters.category) {
+      filtered = filtered.filter(p => p.category === filters.category);
+    }
+
+    // Filtrar por mês/ano
+    if (filters.month) {
+      filtered = filtered.filter(p => {
+        if (!p.due_date) return false;
+        const date = new Date(p.due_date);
+        return date.getMonth() === filters.month.month && 
+               date.getFullYear() === filters.month.year;
+      });
+    }
+
+    setFilteredPayments(filtered);
+  };
 
   const [sortOrder, setSortOrder] = useState('asc'); // 'asc' ou 'desc'
 

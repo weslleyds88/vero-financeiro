@@ -9,6 +9,11 @@ const Members = ({ db, members, onRefresh, isAdmin }) => {
 
   const [sortOrder, setSortOrder] = useState('asc'); // 'asc' ou 'desc'
 
+  const filteredMembers = members.filter(member =>
+    member.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (member.phone && member.phone.includes(searchTerm))
+  );
+
   const sortedAndFilteredMembers = filteredMembers.sort((a, b) => {
     const nameA = a.name.toLowerCase();
     const nameB = b.name.toLowerCase();
