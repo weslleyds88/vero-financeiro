@@ -82,16 +82,6 @@ function Login({ onLogin }) {
               Modo visualização: apenas consulta, sem edições
             </p>
           </div>
-
-          <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-            <p className="text-sm text-blue-800 dark:text-blue-300 font-medium mb-2">
-              💡 Credenciais de Administrador:
-            </p>
-            <p className="text-sm text-blue-600 dark:text-blue-400">
-              <strong>Usuário:</strong> admin<br />
-              <strong>Senha:</strong> admin123
-            </p>
-          </div>
         </div>
       </div>
     </div>
