@@ -28,6 +28,13 @@ const Payments = ({ db, members, payments, filters, onFiltersChange, onRefresh, 
     // Filtrar apenas pagamentos de atletas (que têm member_id)
     let filtered = payments.filter(p => p.member_id && p.status !== 'expense' && p.status !== 'partial');
 
+    // No modo visualização, mostrar apenas pagamentos do próprio atleta
+    if (!isAdmin) {
+      // Para modo visualização, precisamos de uma forma de identificar o atleta atual
+      // Por ora, vamos permitir ver todos os pagamentos (como solicitado)
+      // Mas podemos adicionar lógica para filtrar por atleta específico depois
+    }
+
     if (filters.member_id) {
       filtered = filtered.filter(p => p.member_id === parseInt(filters.member_id));
     }
