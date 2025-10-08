@@ -4,7 +4,7 @@ import ExportButtons from './ExportButtons';
 import { formatDate, formatCurrency, getCurrentMonthObj, getPreviousMonth, getNextMonth, formatMonthName } from '../utils/dateUtils';
 
 
-const Payments = ({ db, members, payments, filters, onFiltersChange, onRefresh }) => {
+const Payments = ({ db, members, payments, filters, onFiltersChange, onRefresh, isAdmin }) => {
   const [showForm, setShowForm] = useState(false);
   const [editingPayment, setEditingPayment] = useState(null);
   const [selectedPayments, setSelectedPayments] = useState([]);
@@ -54,16 +54,28 @@ const Payments = ({ db, members, payments, filters, onFiltersChange, onRefresh }
   };
 
   const handleAddPayment = () => {
+    if (!isAdmin) {
+      alert('Modo visualização: você não pode adicionar novos pagamentos.');
+      return;
+    }
     setEditingPayment(null);
     setShowForm(true);
   };
 
   const handleEditPayment = (payment) => {
+    if (!isAdmin) {
+      alert('Modo visualização: você não pode editar pagamentos.');
+      return;
+    }
     setEditingPayment(payment);
     setShowForm(true);
   };
 
   const handleDeletePayment = async (id) => {
+    if (!isAdmin) {
+      alert('Modo visualização: você não pode excluir pagamentos.');
+      return;
+    }
     if (window.confirm('Tem certeza que deseja excluir este pagamento? Esta ação não pode ser desfeita.')) {
       const success = await db.deletePayment(id);
       if (success) {
@@ -75,6 +87,10 @@ const Payments = ({ db, members, payments, filters, onFiltersChange, onRefresh }
   };
 
   const handleMarkPaid = async (paymentId) => {
+    if (!isAdmin) {
+      alert('Modo visualização: você não pode marcar pagamentos como pagos.');
+      return;
+    }
     const success = await db.markPaid(paymentId);
     if (success) {
       onRefresh();
@@ -84,6 +100,10 @@ const Payments = ({ db, members, payments, filters, onFiltersChange, onRefresh }
   };
 
   const handleMarkSelectedPaid = async () => {
+    if (!isAdmin) {
+      alert('Modo visualização: você não pode marcar pagamentos como pagos.');
+      return;
+    }
     if (selectedPayments.length === 0) return;
 
     setIsMarkingPaid(true);
@@ -184,12 +204,13 @@ const Payments = ({ db, members, payments, filters, onFiltersChange, onRefresh }
           />
           <button
             onClick={handleAddPayment}
-            className="btn btn-primary"
+            disabled={!isAdmin}
+            className={`btn ${isAdmin ? 'btn-primary' : 'btn-secondary opacity-50 cursor-not-allowed'}`}
           >
             <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
             </svg>
-            Nova Mensalidade
+            {isAdmin ? 'Nova Mensalidade' : 'Modo Visualização'}
           </button>
         </div>
       </div>
@@ -299,8 +320,8 @@ const Payments = ({ db, members, payments, filters, onFiltersChange, onRefresh }
             </span>
             <button
               onClick={handleMarkSelectedPaid}
-              disabled={isMarkingPaid}
-              className="btn btn-success btn-sm"
+              disabled={isMarkingPaid || !isAdmin}
+              className={`btn ${isAdmin ? 'btn-success' : 'btn-secondary opacity-50 cursor-not-allowed'} btn-sm`}
             >
               {isMarkingPaid ? (
                 <>
@@ -333,7 +354,7 @@ const Payments = ({ db, members, payments, filters, onFiltersChange, onRefresh }
                       checked={allPendingSelected}
                       onChange={(e) => handleSelectAll(e.target.checked)}
                       className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
-                      disabled={pendingPayments.length === 0}
+                      disabled={pendingPayments.length === 0 || !isAdmin}
                     />
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -368,7 +389,7 @@ const Payments = ({ db, members, payments, filters, onFiltersChange, onRefresh }
                         checked={selectedPayments.includes(payment.id)}
                         onChange={(e) => handleSelectPayment(payment.id, e.target.checked)}
                         className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
-                        disabled={payment.status !== 'pending'}
+                        disabled={payment.status !== 'pending' || !isAdmin}
                       />
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
@@ -396,8 +417,13 @@ const Payments = ({ db, members, payments, filters, onFiltersChange, onRefresh }
                         {payment.status === 'pending' && (
                           <button
                             onClick={() => handleMarkPaid(payment.id)}
-                            className="text-success-600 hover:text-success-900"
-                            title="Marcar como Pago"
+                            disabled={!isAdmin}
+                            className={`${
+                              isAdmin
+                                ? 'text-success-600 hover:text-success-900'
+                                : 'text-gray-400 cursor-not-allowed'
+                            }`}
+                            title={isAdmin ? 'Marcar como Pago' : 'Modo visualização'}
                           >
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -406,8 +432,13 @@ const Payments = ({ db, members, payments, filters, onFiltersChange, onRefresh }
                         )}
                         <button
                           onClick={() => handleEditPayment(payment)}
-                          className="text-primary-600 hover:text-primary-900"
-                          title="Editar"
+                          disabled={!isAdmin}
+                          className={`${
+                            isAdmin
+                              ? 'text-primary-600 hover:text-primary-900'
+                              : 'text-gray-400 cursor-not-allowed'
+                          }`}
+                          title={isAdmin ? 'Editar' : 'Modo visualização'}
                         >
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -415,8 +446,13 @@ const Payments = ({ db, members, payments, filters, onFiltersChange, onRefresh }
                         </button>
                         <button
                           onClick={() => handleDeletePayment(payment.id)}
-                          className="text-danger-600 hover:text-danger-900"
-                          title="Excluir"
+                          disabled={!isAdmin}
+                          className={`${
+                            isAdmin
+                              ? 'text-danger-600 hover:text-danger-900'
+                              : 'text-gray-400 cursor-not-allowed'
+                          }`}
+                          title={isAdmin ? 'Excluir' : 'Modo visualização'}
                         >
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -441,7 +477,8 @@ const Payments = ({ db, members, payments, filters, onFiltersChange, onRefresh }
             <div className="mt-6">
               <button
                 onClick={handleAddPayment}
-                className="btn btn-primary"
+                disabled={!isAdmin}
+                className={`btn ${isAdmin ? 'btn-primary' : 'btn-secondary opacity-50 cursor-not-allowed'}`}
               >
                 <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />

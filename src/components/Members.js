@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import MemberForm from './MemberForm';
 import { formatDate } from '../utils/dateUtils';
 
-const Members = ({ db, members, onRefresh }) => {
+const Members = ({ db, members, onRefresh, isAdmin }) => {
   const [showForm, setShowForm] = useState(false);
   const [editingMember, setEditingMember] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -13,16 +13,28 @@ const Members = ({ db, members, onRefresh }) => {
   );
 
   const handleAddMember = () => {
+    if (!isAdmin) {
+      alert('Modo visualização: você não pode adicionar novos atletas.');
+      return;
+    }
     setEditingMember(null);
     setShowForm(true);
   };
 
   const handleEditMember = (member) => {
+    if (!isAdmin) {
+      alert('Modo visualização: você não pode editar atletas.');
+      return;
+    }
     setEditingMember(member);
     setShowForm(true);
   };
 
   const handleDeleteMember = async (id) => {
+    if (!isAdmin) {
+      alert('Modo visualização: você não pode excluir atletas.');
+      return;
+    }
     if (window.confirm('Tem certeza que deseja excluir este sócio? Esta ação não pode ser desfeita.')) {
       const success = await db.deleteMember(id);
       if (success) {
@@ -64,9 +76,10 @@ const Members = ({ db, members, onRefresh }) => {
           <h2 className="text-2xl font-bold text-gray-900">Atletas</h2>
           <button
             onClick={handleAddMember}
-            className="btn btn-primary"
+            disabled={!isAdmin}
+            className={`btn ${isAdmin ? 'btn-primary' : 'btn-secondary opacity-50 cursor-not-allowed'}`}
           >
-            Novo Atleta
+            {isAdmin ? 'Novo Atleta' : 'Modo Visualização'}
           </button>
         </div>
 
@@ -141,8 +154,13 @@ const Members = ({ db, members, onRefresh }) => {
                       <div className="flex justify-end space-x-2">
                         <button
                           onClick={() => handleEditMember(member)}
-                          className="text-primary-600 hover:text-primary-900"
-                          title="Editar"
+                          disabled={!isAdmin}
+                          className={`${
+                            isAdmin
+                              ? 'text-primary-600 hover:text-primary-900'
+                              : 'text-gray-400 cursor-not-allowed'
+                          }`}
+                          title={isAdmin ? 'Editar' : 'Modo visualização'}
                         >
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -150,8 +168,13 @@ const Members = ({ db, members, onRefresh }) => {
                         </button>
                         <button
                           onClick={() => handleDeleteMember(member.id)}
-                          className="text-danger-600 hover:text-danger-900"
-                          title="Excluir"
+                          disabled={!isAdmin}
+                          className={`${
+                            isAdmin
+                              ? 'text-danger-600 hover:text-danger-900'
+                              : 'text-gray-400 cursor-not-allowed'
+                          }`}
+                          title={isAdmin ? 'Excluir' : 'Modo visualização'}
                         >
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -177,9 +200,10 @@ const Members = ({ db, members, onRefresh }) => {
               <div className="mt-6">
                 <button
                   onClick={handleAddMember}
-                  className="btn btn-primary"
+                  disabled={!isAdmin}
+                  className={`btn ${isAdmin ? 'btn-primary' : 'btn-secondary opacity-50 cursor-not-allowed'}`}
                 >
-                  Adicionar Atleta
+                  {isAdmin ? 'Adicionar Atleta' : 'Modo Visualização'}
                 </button>
               </div>
             )}
