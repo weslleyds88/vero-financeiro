@@ -95,12 +95,6 @@ const Sidebar = ({ isAdmin, onLogout }) => {
       </nav>
 
       <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200">
-        <div className="mb-3 text-xs text-gray-500 text-center">
-          <span className={`font-medium ${isAdmin ? 'text-green-600' : 'text-blue-600'}`}>
-            {isAdmin ? 'Modo Administrador' : 'Modo Visualização'}
-          </span>
-        </div>
-
         <button
           onClick={onLogout}
           className="w-full flex items-center justify-center px-3 py-2 bg-red-50 hover:bg-red-100 text-red-600 hover:text-red-700 rounded-lg text-sm font-medium transition-colors duration-200"
