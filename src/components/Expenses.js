@@ -10,6 +10,7 @@ const Expenses = ({ db, payments, currentMonth, onMonthChange, onRefresh, member
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [payingExpense, setPayingExpense] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
 
   // Filtrar apenas despesas (incluindo parciais e totalmente pagas)
   // Despesas são identificadas por NÃO ter member_id
@@ -24,6 +25,19 @@ const Expenses = ({ db, payments, currentMonth, onMonthChange, onRefresh, member
     const expenseDate = new Date(expense.due_date);
     return expenseDate.getFullYear() === currentMonth.year && 
            expenseDate.getMonth() === currentMonth.month;
+  }).filter(expense => {
+    // Aplicar filtro de busca se houver termo de busca
+    if (!searchTerm) return true;
+
+    const category = expense.category ? expense.category.toLowerCase() : '';
+    const amount = expense.amount ? expense.amount.toString().toLowerCase() : '';
+    const observation = expense.observation ? expense.observation.toLowerCase() : '';
+    const date = expense.due_date ? formatDate(expense.due_date).toLowerCase() : '';
+
+    return category.includes(searchTerm.toLowerCase()) ||
+           amount.includes(searchTerm.toLowerCase()) ||
+           observation.includes(searchTerm.toLowerCase()) ||
+           date.includes(searchTerm.toLowerCase());
   }).sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
   const handleAddExpense = () => {
@@ -266,6 +280,25 @@ const Expenses = ({ db, payments, currentMonth, onMonthChange, onRefresh, member
                 <p className="text-2xl font-bold text-gray-900">{filteredExpenses.length}</p>
               </div>
             </div>
+          </div>
+        </div>
+
+
+        {/* Barra de Pesquisa */}
+        <div className="mb-6">
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </div>
+            <input
+              type="text"
+              placeholder="Buscar por categoria, valor, observação ou data..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="input pl-10"
+            />
           </div>
         </div>
 

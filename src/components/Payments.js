@@ -8,8 +8,8 @@ const Payments = ({ db, members, payments, filters, onFiltersChange, onRefresh, 
   const [showForm, setShowForm] = useState(false);
   const [editingPayment, setEditingPayment] = useState(null);
   const [selectedPayments, setSelectedPayments] = useState([]);
-  const [filteredPayments, setFilteredPayments] = useState([]);
   const [isMarkingPaid, setIsMarkingPaid] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
 
   const categories = [
     'Mensalidade',
@@ -20,13 +20,11 @@ const Payments = ({ db, members, payments, filters, onFiltersChange, onRefresh, 
     'Outros'
   ];
 
-  useEffect(() => {
-    applyFilters();
-  }, [payments, filters]); // eslint-disable-line react-hooks/exhaustive-deps
+  const [sortOrder, setSortOrder] = useState('asc'); // 'asc' ou 'desc'
 
-  const applyFilters = () => {
+  const filteredPayments = payments.filter(p => {
     // Filtrar apenas pagamentos de atletas (que têm member_id)
-    let filtered = payments.filter(p => p.member_id && p.status !== 'expense' && p.status !== 'partial');
+    if (!p.member_id || p.status === 'expense' || p.status === 'partial') return false;
 
     // No modo visualização, mostrar apenas pagamentos do próprio atleta
     if (!isAdmin) {
@@ -35,32 +33,34 @@ const Payments = ({ db, members, payments, filters, onFiltersChange, onRefresh, 
       // Mas podemos adicionar lógica para filtrar por atleta específico depois
     }
 
-    if (filters.member_id) {
-      filtered = filtered.filter(p => p.member_id === parseInt(filters.member_id));
-    }
-
-    if (filters.status) {
-      filtered = filtered.filter(p => p.status === filters.status);
-    }
-
-    if (filters.category) {
-      filtered = filtered.filter(p => p.category === filters.category);
-    }
+    // Aplicar filtros
+    if (filters.member_id && p.member_id !== parseInt(filters.member_id)) return false;
+    if (filters.status && p.status !== filters.status) return false;
+    if (filters.category && p.category !== filters.category) return false;
 
     // Filtrar por mês/ano
     if (filters.month) {
-      filtered = filtered.filter(p => {
-        if (!p.due_date) return false;
-        const date = new Date(p.due_date);
-        return date.getMonth() === filters.month.month && 
-               date.getFullYear() === filters.month.year;
-      });
+      if (!p.due_date) return false;
+      const date = new Date(p.due_date);
+      if (date.getMonth() !== filters.month.month || date.getFullYear() !== filters.month.year) return false;
     }
 
-    setFilteredPayments(filtered);
-  };
+    // Filtrar por termo de busca
+    if (searchTerm) {
+      const member = members.find(m => m.id === p.member_id);
+      const memberName = member ? member.name.toLowerCase() : '';
+      const amount = p.amount ? p.amount.toString().toLowerCase() : '';
+      const category = p.category ? p.category.toLowerCase() : '';
+      const observation = p.observation ? p.observation.toLowerCase() : '';
 
-  const [sortOrder, setSortOrder] = useState('asc'); // 'asc' ou 'desc'
+      return memberName.includes(searchTerm.toLowerCase()) ||
+             amount.includes(searchTerm.toLowerCase()) ||
+             category.includes(searchTerm.toLowerCase()) ||
+             observation.includes(searchTerm.toLowerCase());
+    }
+
+    return true;
+  });
 
   const sortedAndFilteredPayments = filteredPayments.sort((a, b) => {
     // Ordenar primeiro por nome do atleta, depois por data
@@ -329,6 +329,24 @@ const Payments = ({ db, members, payments, filters, onFiltersChange, onRefresh, 
               <option value="desc">Z-A ↓</option>
             </select>
           </div>
+        </div>
+      </div>
+
+      {/* Barra de Pesquisa */}
+      <div className="mb-6">
+        <div className="relative">
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+          </div>
+          <input
+            type="text"
+            placeholder="Buscar por atleta, valor, categoria ou observação..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="input pl-10"
+          />
         </div>
       </div>
 
