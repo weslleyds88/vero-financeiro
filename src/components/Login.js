@@ -22,9 +22,8 @@ function Login({ onLogin }) {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-      <div className="max-w-md w-full">
-      <div className="w-full md:max-w-md">
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4 sm:p-6 lg:p-8">
+      <div className="w-full max-w-sm sm:max-w-md">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
             🏐 Despesas Vero
@@ -34,7 +33,7 @@ function Login({ onLogin }) {
           </p>
         </div>
 
-        <div className="card p-8">
+        <div className="card p-6 sm:p-8">
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
               <label className="label">Usuário</label>
@@ -66,7 +65,7 @@ function Login({ onLogin }) {
 
             <button
               type="submit"
-              className="btn-primary w-full"
+              className="btn-primary w-full py-3 touch-manipulation"
             >
               🔓 Entrar como Administrador
             </button>
@@ -75,7 +74,7 @@ function Login({ onLogin }) {
           <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
             <button
               onClick={handleViewMode}
-              className="btn-secondary w-full"
+              className="btn-secondary w-full py-3 touch-manipulation"
             >
               👁️ Entrar em Modo Visualização
             </button>

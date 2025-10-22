@@ -98,14 +98,15 @@ function AppContent() {
       {/* Botão hambúrguer para mobile */}
       <button
         onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-        className="fixed top-4 left-4 z-30 md:hidden bg-white p-2 rounded-lg shadow-lg border border-gray-200 hover:bg-gray-50 transition-colors"
+        className="fixed top-4 left-4 z-30 md:hidden bg-white p-3 rounded-lg shadow-lg border border-gray-200 hover:bg-gray-50 active:bg-gray-100 transition-all duration-200 touch-manipulation min-w-[48px] min-h-[48px] flex items-center justify-center"
+        aria-label="Abrir menu"
       >
         <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
         </svg>
       </button>
       
-      <main className="flex-1 md:ml-64 pt-16 md:pt-0">
+      <main className="flex-1 md:ml-64 pt-16 md:pt-0 px-3 sm:px-4 md:px-6 lg:px-8">
         <Routes>
           <Route
             path="/"
