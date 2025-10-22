@@ -80,7 +80,7 @@ const Sidebar = ({ isAdmin, onLogout, isOpen, onClose }) => {
       {/* Sidebar */}
       <div className={`fixed left-0 top-0 h-full w-64 bg-white shadow-lg border-r border-gray-200 z-50 transform transition-transform duration-300 ease-in-out ${
         isOpen ? 'translate-x-0' : '-translate-x-full'
-      } md:translate-x-0 md:static md:h-screen md:w-64 lg:w-72`}>
+      } md:translate-x-0`}>
       <div className="p-6 border-b border-gray-200">
         <h1 className="text-xl font-bold text-gray-900">Despesas Vero</h1>
         <p className="text-sm text-gray-500 mt-1">Vero Volei</p>
@@ -97,7 +97,7 @@ const Sidebar = ({ isAdmin, onLogout, isOpen, onClose }) => {
                   location.pathname === item.path
                     ? 'bg-primary-100 text-primary-700 border-r-2 border-primary-600'
                     : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900 active:bg-gray-200'
-                }`}
+                } md:py-2 md:min-h-[auto] md:touch-auto`}
               >
                 {item.icon}
                 <span className="ml-3">{item.name}</span>
@@ -116,7 +116,7 @@ const Sidebar = ({ isAdmin, onLogout, isOpen, onClose }) => {
 
         <button
           onClick={onLogout}
-          className="w-full flex items-center justify-center px-3 py-3 bg-red-50 hover:bg-red-100 text-red-600 hover:text-red-700 rounded-lg text-sm font-medium transition-all duration-200 touch-manipulation min-h-[48px]"
+          className="w-full flex items-center justify-center px-3 py-3 bg-red-50 hover:bg-red-100 text-red-600 hover:text-red-700 rounded-lg text-sm font-medium transition-all duration-200 touch-manipulation min-h-[48px] md:py-2 md:min-h-[auto] md:touch-auto"
         >
           <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />

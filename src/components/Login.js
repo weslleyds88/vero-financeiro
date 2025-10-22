@@ -22,8 +22,8 @@ function Login({ onLogin }) {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4 sm:p-6 lg:p-8">
-      <div className="w-full max-w-sm sm:max-w-md">
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+      <div className="w-full md:max-w-md">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
             🏐 Despesas Vero
@@ -33,7 +33,7 @@ function Login({ onLogin }) {
           </p>
         </div>
 
-        <div className="card p-6 sm:p-8">
+        <div className="card p-8">
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
               <label className="label">Usuário</label>

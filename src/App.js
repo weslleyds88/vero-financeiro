@@ -106,7 +106,7 @@ function AppContent() {
         </svg>
       </button>
       
-      <main className="flex-1 md:ml-64 pt-16 md:pt-0 px-3 sm:px-4 md:px-6 lg:px-8">
+      <main className="flex-1 md:ml-64 pt-16 md:pt-0">
         <Routes>
           <Route
             path="/"
