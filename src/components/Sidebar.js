@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 
-const Sidebar = ({ isAdmin, onLogout }) => {
+const Sidebar = ({ isAdmin, onLogout, isOpen, onClose }) => {
   const location = useLocation();
 
   const menuItems = [
@@ -68,7 +68,19 @@ const Sidebar = ({ isAdmin, onLogout }) => {
   ];
 
   return (
-    <div className="fixed left-0 top-0 h-full w-64 bg-white shadow-lg border-r border-gray-200 z-30">
+    <>
+      {/* Overlay para mobile */}
+      {isOpen && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden"
+          onClick={onClose}
+        />
+      )}
+      
+      {/* Sidebar */}
+      <div className={`fixed left-0 top-0 h-full w-64 bg-white shadow-lg border-r border-gray-200 z-50 transform transition-transform duration-300 ease-in-out ${
+        isOpen ? 'translate-x-0' : '-translate-x-full'
+      } md:translate-x-0`}>
       <div className="p-6 border-b border-gray-200">
         <h1 className="text-xl font-bold text-gray-900">Despesas Vero</h1>
         <p className="text-sm text-gray-500 mt-1">Vero Volei</p>
@@ -80,6 +92,7 @@ const Sidebar = ({ isAdmin, onLogout }) => {
             <li key={item.path}>
               <Link
                 to={item.path}
+                onClick={onClose}
                 className={`flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-200 ${
                   location.pathname === item.path
                     ? 'bg-primary-100 text-primary-700 border-r-2 border-primary-600'
@@ -117,6 +130,7 @@ const Sidebar = ({ isAdmin, onLogout }) => {
         </div>
       </div>
     </div>
+    </>
   );
 };
 
