@@ -200,6 +200,202 @@ const Payments = ({ db, members, payments, onRefresh, isAdmin, supabase, current
       return nameA.localeCompare(nameB);
   }), [listFilteredPayments, isAdmin, payments, members, groups]);
 
+  // Resumo por Atleta - useMemo deve estar no nível do componente, não condicionalmente
+  const membersWithPaymentsSummary = useMemo(() => {
+    // Debug: Log dos dados
+    console.log('🔍 [Resumo por Atleta] Debug:', {
+      totalMembers: members.length,
+      totalPayments: payments.length,
+      memberIds: members.map(m => ({ id: m.id?.toString(), name: m.full_name || m.name })),
+      paymentMemberIds: payments.map(p => ({ member_id: p.member_id?.toString(), amount: p.amount, category: p.category }))
+    });
+
+    // Filtrar membros que têm pagamentos
+    return members
+      .filter(member => {
+        // Filtrar por nome OU telefone
+        if (summarySearchTerm.trim() !== '') {
+          const searchLower = summarySearchTerm.toLowerCase().trim();
+          const memberName = (member.full_name || member.name || '').toLowerCase();
+          const memberPhone = (member.phone || '').toLowerCase();
+          
+          // Busca por nome ou telefone
+          if (!memberName.includes(searchLower) && !memberPhone.includes(searchLower)) {
+            return false;
+          }
+        }
+        return true;
+      })
+      .map(member => {
+        // Filtrar pagamentos do membro - usar payments completo para incluir pagamentos de grupo individuais
+        // Comparar IDs como string para evitar problemas de tipo
+        let memberPayments = payments.filter(p => {
+          const paymentMemberId = p.member_id?.toString();
+          const memberId = member.id?.toString();
+          const matches = paymentMemberId === memberId;
+          
+          // Debug para primeiro membro
+          if (members.indexOf(member) === 0 && payments.indexOf(p) < 3) {
+            console.log(`🔍 Comparando: memberId="${memberId}" vs paymentMemberId="${paymentMemberId}" = ${matches}`);
+          }
+          
+          return matches;
+        });
+        
+        console.log(`👤 ${member.full_name || member.name}: ${memberPayments.length} pagamento(s) encontrado(s)`);
+        
+        // Filtrar por grupo se não for "all"
+        if (summaryGroup !== 'all') {
+          memberPayments = memberPayments.filter(p => {
+            const paymentGroupId = p.group_id?.toString();
+            const filterGroupId = summaryGroup?.toString();
+            return paymentGroupId === filterGroupId;
+          });
+        }
+        
+        // Filtrar por ano se não for "all"
+        if (summaryYear !== 'all') {
+          memberPayments = memberPayments.filter(p => 
+            p.due_date && p.due_date.startsWith(summaryYear)
+          );
+        }
+        
+        // Retornar objeto com membro e pagamentos
+        return { member, memberPayments };
+      })
+      .filter(({ memberPayments }) => memberPayments.length > 0)
+      .map(({ member, memberPayments }) => {
+
+        // Calcular valores corretos (usando amount, não displayAmount)
+        const totalExpected = memberPayments.reduce((sum, p) => sum + parseFloat(p.amount || 0), 0);
+        
+        // Somar pagamentos completos E parciais
+        const totalPaid = memberPayments.reduce((sum, p) => {
+          if (p.status === 'paid') {
+            // Se está pago, somar o valor completo
+            return sum + parseFloat(p.amount || 0);
+          } else if (p.paid_amount && parseFloat(p.paid_amount) > 0) {
+            // Se tem paid_amount (parcial), somar apenas o valor já pago
+            return sum + parseFloat(p.paid_amount || 0);
+          }
+          return sum;
+        }, 0);
+        
+        const totalPending = totalExpected - totalPaid;
+
+        return (
+          <div key={member.id} className="card p-4">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center space-x-3 flex-1">
+                <div className="flex-shrink-0">
+                  {member.avatar_url ? (
+                    <img
+                      src={member.avatar_url}
+                      alt={member.full_name || member.name}
+                      className="w-12 h-12 rounded-full object-cover border-2 border-gray-200"
+                      onError={(e) => {
+                        e.target.style.display = 'none';
+                        if (e.target.nextSibling) {
+                          e.target.nextSibling.style.display = 'flex';
+                        }
+                      }}
+                    />
+                  ) : null}
+                  <div 
+                    className="w-12 h-12 bg-primary-100 rounded-full flex items-center justify-center"
+                    style={{ display: member.avatar_url ? 'none' : 'flex' }}
+                  >
+                    <span className="text-primary-600 font-medium">
+                      {(member.full_name || member.name || '?').charAt(0).toUpperCase()}
+                    </span>
+                  </div>
+                </div>
+                <div>
+                  <h4 className="font-medium text-gray-900">{member.full_name || member.name}</h4>
+                  <p className="text-sm text-gray-500">{member.phone || '-'}</p>
+                </div>
+              </div>
+              <div className="text-right">
+                <div className="text-sm text-gray-500">Total</div>
+                <div className="text-lg font-bold text-gray-900">
+                  {formatCurrency(totalExpected)}
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <div className="flex justify-between text-sm">
+                <span className="text-green-600 font-medium">Pago</span>
+                <span className="text-green-600 font-bold">{formatCurrency(totalPaid)}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-red-600 font-medium">Pendente</span>
+                <span className="text-red-600 font-bold">{formatCurrency(totalPending)}</span>
+              </div>
+            </div>
+
+            <div className="mt-3">
+              <div className="w-full bg-gray-200 rounded-full h-2">
+                <div
+                  className="bg-green-600 h-2 rounded-full transition-all duration-300"
+                  style={{
+                    width: `${totalExpected > 0 ? (totalPaid / totalExpected) * 100 : 0}%`
+                  }}
+                ></div>
+              </div>
+              <div className="flex justify-between text-xs text-gray-500 mt-1">
+                <span>{memberPayments.filter(p => p.status === 'paid').length} pago(s)</span>
+                <span>{Math.round(totalExpected > 0 ? (totalPaid / totalExpected) * 100 : 0)}%</span>
+              </div>
+            </div>
+
+            {/* Detalhamento por grupo/categoria */}
+            <div className="mt-3 pt-3 border-t border-gray-200">
+              <div className="text-xs text-gray-500 space-y-1">
+                {(() => {
+                  // Agrupar por grupo ou categoria
+                  const grouped = {};
+                  memberPayments.forEach(p => {
+                    const key = p.isGroupPayment && p.groupName 
+                      ? `Grupo: ${p.groupName}` 
+                      : p.category || 'Sem categoria';
+                    
+                    if (!grouped[key]) {
+                      grouped[key] = [];
+                    }
+                    grouped[key].push(p);
+                  });
+
+                  return Object.entries(grouped).map(([key, categoryPayments]) => {
+                    const categoryTotal = categoryPayments.reduce((sum, p) => sum + parseFloat(p.amount || 0), 0);
+                    
+                    // Somar pagamentos completos E parciais por grupo/categoria
+                    const categoryPaid = categoryPayments.reduce((sum, p) => {
+                      if (p.status === 'paid') {
+                        return sum + parseFloat(p.amount || 0);
+                      } else if (p.paid_amount && parseFloat(p.paid_amount) > 0) {
+                        return sum + parseFloat(p.paid_amount || 0);
+                      }
+                      return sum;
+                    }, 0);
+
+                    return (
+                      <div key={key} className="flex justify-between">
+                        <span>{key}</span>
+                        <span className={categoryPaid === categoryTotal ? 'text-green-600' : 'text-gray-600'}>
+                          {formatCurrency(categoryPaid)} / {formatCurrency(categoryTotal)}
+                        </span>
+                      </div>
+                    );
+                  });
+                })()}
+              </div>
+            </div>
+          </div>
+        );
+      });
+  }, [members, payments, summarySearchTerm, summaryGroup, summaryYear]);
+
   const handleAddPayment = () => {
     if (!isAdmin) {
       return;
@@ -1310,8 +1506,9 @@ const Payments = ({ db, members, payments, onRefresh, isAdmin, supabase, current
             </div>
           )}
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {members
+          {(() => {
+            // Filtrar membros que têm pagamentos
+            const membersWithPayments = members
               .filter(member => {
                 // Filtrar por nome OU telefone
                 if (summarySearchTerm.trim() !== '') {
@@ -1328,11 +1525,20 @@ const Payments = ({ db, members, payments, onRefresh, isAdmin, supabase, current
               })
               .map(member => {
                 // Filtrar pagamentos do membro - usar payments completo para incluir pagamentos de grupo individuais
-                let memberPayments = payments.filter(p => p.member_id === member.id);
+                // Comparar IDs como string para evitar problemas de tipo
+                let memberPayments = payments.filter(p => {
+                  const paymentMemberId = p.member_id?.toString();
+                  const memberId = member.id?.toString();
+                  return paymentMemberId === memberId;
+                });
                 
                 // Filtrar por grupo se não for "all"
                 if (summaryGroup !== 'all') {
-                  memberPayments = memberPayments.filter(p => p.group_id === summaryGroup);
+                  memberPayments = memberPayments.filter(p => {
+                    const paymentGroupId = p.group_id?.toString();
+                    const filterGroupId = summaryGroup?.toString();
+                    return paymentGroupId === filterGroupId;
+                  });
                 }
                 
                 // Filtrar por ano se não for "all"
@@ -1342,7 +1548,11 @@ const Payments = ({ db, members, payments, onRefresh, isAdmin, supabase, current
                   );
                 }
                 
-                if (memberPayments.length === 0) return null;
+                // Retornar objeto com membro e pagamentos
+                return { member, memberPayments };
+              })
+              .filter(({ memberPayments }) => memberPayments.length > 0)
+              .map(({ member, memberPayments }) => {
 
               // Calcular valores corretos (usando amount, não displayAmount)
               const totalExpected = memberPayments.reduce((sum, p) => sum + parseFloat(p.amount || 0), 0);
@@ -1471,8 +1681,31 @@ const Payments = ({ db, members, payments, onRefresh, isAdmin, supabase, current
                   </div>
                 </div>
               );
-            })}
-          </div>
+              });
+
+            // Verificar se há membros com pagamentos
+            if (membersWithPayments.length === 0) {
+              return (
+                <div className="text-center py-12">
+                  <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
+                  </svg>
+                  <h3 className="mt-2 text-sm font-medium text-gray-900">Nenhum atleta com pagamentos encontrado</h3>
+                  <p className="mt-1 text-sm text-gray-500">
+                    {summarySearchTerm || summaryGroup !== 'all' || summaryYear !== 'all'
+                      ? 'Tente ajustar os filtros ou verifique se os pagamentos foram criados corretamente.'
+                      : 'Crie pagamentos para os atletas para ver o resumo aqui.'}
+                  </p>
+                </div>
+              );
+            }
+
+            return (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {membersWithPayments}
+              </div>
+            );
+          })()}
         </div>
       )}
 

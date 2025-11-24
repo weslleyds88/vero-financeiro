@@ -16,13 +16,36 @@ class SupabaseAdapter {
   // MEMBERS
   async listMembers() {
     try {
+      // Buscar da tabela profiles (não mais members)
       const { data, error } = await this.supabase
-        .from('members')
-        .select('*')
-        .order('name');
+        .from('profiles')
+        .select('id, email, full_name, phone, position, role, status, account_status, avatar_url, created_at, observation, birth_date, rg, region, gender, responsible_name, responsible_phone')
+        .in('status', ['approved', 'pending']) // Apenas aprovados e pendentes
+        .order('full_name');
 
       if (error) throw error;
-      return data || [];
+      
+      // Mapear para o formato esperado (compatibilidade)
+      return (data || []).map(profile => ({
+        id: profile.id,
+        name: profile.full_name || profile.email,
+        full_name: profile.full_name,
+        phone: profile.phone,
+        observation: profile.observation,
+        email: profile.email,
+        position: profile.position,
+        role: profile.role,
+        status: profile.status,
+        account_status: profile.account_status,
+        avatar_url: profile.avatar_url,
+        created_at: profile.created_at,
+        birth_date: profile.birth_date,
+        rg: profile.rg,
+        region: profile.region,
+        gender: profile.gender,
+        responsible_name: profile.responsible_name,
+        responsible_phone: profile.responsible_phone
+      }));
     } catch (error) {
       console.error('Erro ao listar atletas:', error);
       return [];
