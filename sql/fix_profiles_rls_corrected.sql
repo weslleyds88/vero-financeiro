@@ -1,7 +1,6 @@
 -- ============================================
--- POLÍTICAS RLS PARA A TABELA profiles
--- Permite que admins atualizem perfis (incluindo role)
--- Permite que usuários atualizem seus próprios perfis (exceto role)
+-- POLÍTICAS RLS PARA A TABELA profiles (CORRIGIDO)
+-- Versão corrigida que evita recursão e permite login
 -- ============================================
 
 -- Habilitar RLS na tabela profiles (se ainda não estiver habilitado)
@@ -13,7 +12,31 @@ DROP POLICY IF EXISTS "Usuários podem atualizar seus próprios perfis" ON profi
 DROP POLICY IF EXISTS "Usuários podem ver seus próprios perfis" ON profiles;
 DROP POLICY IF EXISTS "Admins podem ver todos os perfis" ON profiles;
 
--- Política: Usuários podem ver seus próprios perfis
+-- Remover função antiga se existir
+DROP FUNCTION IF EXISTS public.is_admin();
+
+-- Criar função de segurança que bypassa RLS para verificar role
+-- Isso evita recursão nas políticas
+CREATE OR REPLACE FUNCTION public.is_admin()
+RETURNS boolean
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+STABLE
+AS $$
+DECLARE
+  user_role text;
+BEGIN
+  -- Buscar role diretamente, bypassando RLS com SECURITY DEFINER
+  SELECT role INTO user_role
+  FROM public.profiles
+  WHERE id = auth.uid();
+  
+  RETURN user_role = 'admin';
+END;
+$$;
+
+-- Política 1: Usuários podem ver seus próprios perfis (sempre permitido)
 CREATE POLICY "Usuários podem ver seus próprios perfis"
 ON profiles
 FOR SELECT
@@ -22,31 +45,17 @@ USING (
   id = auth.uid()
 );
 
--- Política: Admins podem ver todos os perfis
--- IMPORTANTE: Usa uma função de segurança para evitar recursão
--- A função verifica o role sem causar loop nas políticas RLS
-CREATE OR REPLACE FUNCTION public.is_admin()
-RETURNS boolean
-LANGUAGE sql
-SECURITY DEFINER
-STABLE
-AS $$
-  SELECT EXISTS (
-    SELECT 1 FROM public.profiles
-    WHERE id = auth.uid()
-    AND role = 'admin'
-  );
-$$;
-
+-- Política 2: Admins podem ver todos os perfis
+-- Usa a função is_admin() que bypassa RLS para evitar recursão
 CREATE POLICY "Admins podem ver todos os perfis"
 ON profiles
 FOR SELECT
 TO authenticated
 USING (
-  public.is_admin() OR id = auth.uid()
+  public.is_admin()
 );
 
--- Política: Usuários podem atualizar seus próprios perfis (exceto role)
+-- Política 3: Usuários podem atualizar seus próprios perfis (exceto role)
 CREATE POLICY "Usuários podem atualizar seus próprios perfis"
 ON profiles
 FOR UPDATE
@@ -57,10 +66,13 @@ USING (
 WITH CHECK (
   id = auth.uid()
   -- Não permitir que usuários alterem seu próprio role
-  AND (role IS NULL OR role = (SELECT role FROM profiles WHERE id = auth.uid()))
+  AND (
+    role IS NULL 
+    OR role = (SELECT role FROM public.profiles WHERE id = auth.uid())
+  )
 );
 
--- Política: Admins podem atualizar qualquer perfil (incluindo role)
+-- Política 4: Admins podem atualizar qualquer perfil (incluindo role)
 CREATE POLICY "Admins podem atualizar perfis"
 ON profiles
 FOR UPDATE
@@ -85,4 +97,9 @@ SELECT
 FROM pg_policies
 WHERE tablename = 'profiles'
 ORDER BY policyname;
+
+-- Testar função
+SELECT 
+  auth.uid() as current_user_id,
+  public.is_admin() as is_admin_result;
 

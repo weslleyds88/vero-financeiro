@@ -1327,8 +1327,8 @@ const Payments = ({ db, members, payments, onRefresh, isAdmin, supabase, current
                 return true;
               })
               .map(member => {
-                // Filtrar pagamentos do membro
-                let memberPayments = filteredPayments.filter(p => p.member_id === member.id);
+                // Filtrar pagamentos do membro - usar payments completo para incluir pagamentos de grupo individuais
+                let memberPayments = payments.filter(p => p.member_id === member.id);
                 
                 // Filtrar por grupo se não for "all"
                 if (summaryGroup !== 'all') {
@@ -1427,32 +1427,46 @@ const Payments = ({ db, members, payments, onRefresh, isAdmin, supabase, current
                     </div>
                   </div>
 
-                  {/* Detalhamento das categorias */}
+                  {/* Detalhamento por grupo/categoria */}
                   <div className="mt-3 pt-3 border-t border-gray-200">
                     <div className="text-xs text-gray-500 space-y-1">
-                      {Array.from(new Set(memberPayments.map(p => p.category))).map(category => {
-                        const categoryPayments = memberPayments.filter(p => p.category === category);
-                        const categoryTotal = categoryPayments.reduce((sum, p) => sum + parseFloat(p.amount || 0), 0);
-                        
-                        // Somar pagamentos completos E parciais por categoria
-                        const categoryPaid = categoryPayments.reduce((sum, p) => {
-                          if (p.status === 'paid') {
-                            return sum + parseFloat(p.amount || 0);
-                          } else if (p.paid_amount && parseFloat(p.paid_amount) > 0) {
-                            return sum + parseFloat(p.paid_amount || 0);
+                      {(() => {
+                        // Agrupar por grupo ou categoria
+                        const grouped = {};
+                        memberPayments.forEach(p => {
+                          const key = p.isGroupPayment && p.groupName 
+                            ? `Grupo: ${p.groupName}` 
+                            : p.category || 'Sem categoria';
+                          
+                          if (!grouped[key]) {
+                            grouped[key] = [];
                           }
-                          return sum;
-                        }, 0);
+                          grouped[key].push(p);
+                        });
 
-                        return (
-                          <div key={category} className="flex justify-between">
-                            <span>{category}</span>
-                            <span className={categoryPaid === categoryTotal ? 'text-green-600' : 'text-gray-600'}>
-                              {formatCurrency(categoryPaid)} / {formatCurrency(categoryTotal)}
-                            </span>
-                          </div>
-                        );
-                      })}
+                        return Object.entries(grouped).map(([key, categoryPayments]) => {
+                          const categoryTotal = categoryPayments.reduce((sum, p) => sum + parseFloat(p.amount || 0), 0);
+                          
+                          // Somar pagamentos completos E parciais por grupo/categoria
+                          const categoryPaid = categoryPayments.reduce((sum, p) => {
+                            if (p.status === 'paid') {
+                              return sum + parseFloat(p.amount || 0);
+                            } else if (p.paid_amount && parseFloat(p.paid_amount) > 0) {
+                              return sum + parseFloat(p.paid_amount || 0);
+                            }
+                            return sum;
+                          }, 0);
+
+                          return (
+                            <div key={key} className="flex justify-between">
+                              <span>{key}</span>
+                              <span className={categoryPaid === categoryTotal ? 'text-green-600' : 'text-gray-600'}>
+                                {formatCurrency(categoryPaid)} / {formatCurrency(categoryTotal)}
+                              </span>
+                            </div>
+                          );
+                        });
+                      })()}
                     </div>
                   </div>
                 </div>

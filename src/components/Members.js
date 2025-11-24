@@ -294,6 +294,13 @@ const Members = ({ db, members, onRefresh, isAdmin, supabase }) => {
                               }
 
                               try {
+                                // Verificar se está tentando alterar o próprio role (não permitido)
+                                const { data: { user } } = await supabase.auth.getUser();
+                                if (user && member.id === user.id) {
+                                  alert('⚠️ Você não pode alterar seus próprios privilégios de administrador.');
+                                  return;
+                                }
+
                                 const newRole = isCurrentlyAdmin ? 'user' : 'admin';
                                 
                                 const { error } = await supabase
