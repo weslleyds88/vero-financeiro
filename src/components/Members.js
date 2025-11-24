@@ -281,6 +281,64 @@ const Members = ({ db, members, onRefresh, isAdmin, supabase }) => {
                                 return;
                               }
 
+                              const isCurrentlyAdmin = member.role === 'admin';
+                              const action = isCurrentlyAdmin ? 'remover os privilégios de administrador de' : 'promover a administrador';
+                              
+                              if (!window.confirm(
+                                `⚠️ ATENÇÃO: Tem certeza que deseja ${action} ${member.full_name || member.name}?\n\n` +
+                                (isCurrentlyAdmin 
+                                  ? 'Esta pessoa perderá acesso ao painel administrativo e voltará a ter visão de jogador.'
+                                  : 'Esta pessoa terá acesso completo ao painel administrativo e todas as funcionalidades de admin.')
+                              )) {
+                                return;
+                              }
+
+                              try {
+                                const newRole = isCurrentlyAdmin ? 'user' : 'admin';
+                                
+                                const { error } = await supabase
+                                  .from('profiles')
+                                  .update({ role: newRole })
+                                  .eq('id', member.id);
+
+                                if (error) throw error;
+
+                                alert(`✅ ${isCurrentlyAdmin ? 'Privilégios de administrador removidos' : 'Usuário promovido a administrador'} com sucesso!\n\n` +
+                                      `${member.full_name || member.name} agora tem ${newRole === 'admin' ? 'acesso de administrador' : 'visão de jogador'}.\n\n` +
+                                      (newRole === 'admin' 
+                                        ? '⚠️ A pessoa precisará fazer logout e login novamente para ver as mudanças.'
+                                        : ''));
+                                
+                                // Recarregar dados
+                                onRefresh();
+                                
+                                // Recarregar lista de usuários
+                                const { data, error: reloadError } = await supabase
+                                  .from('profiles')
+                                  .select('id, email, full_name, phone, position, role, status, account_status, avatar_url, created_at, observation, birth_date, rg, region, gender, responsible_name, responsible_phone')
+                                  .order('created_at', { ascending: false });
+                                
+                                if (!reloadError && data) {
+                                  setAllUsers(data);
+                                }
+                              } catch (e) {
+                                console.error('Erro ao alterar role:', e);
+                                alert('Erro ao alterar privilégios: ' + (e.message || 'desconhecido'));
+                              }
+                            }}
+                            className={`${member.role === 'admin' ? 'text-orange-600 hover:text-orange-900' : 'text-purple-600 hover:text-purple-900'}`}
+                            title={member.role === 'admin' ? 'Remover privilégios de admin' : 'Promover a administrador'}
+                          >
+                            {member.role === 'admin' ? '👑' : '⭐'}
+                          </button>
+                          <button
+                            onClick={async () => {
+                              if (!member.id) {
+                                console.error('Member ID é undefined:', member);
+                                alert('Erro: ID do atleta não disponível');
+                                return;
+                              }
+
                               console.log('Resetando senha para:', member.id, member.full_name || member.name);
 
                               if (!window.confirm(`Gerar nova senha temporária para ${member.full_name || member.name}?`)) return;

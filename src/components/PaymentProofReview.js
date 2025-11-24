@@ -207,12 +207,37 @@ const PaymentProofReview = ({ supabase, currentUser, onClose }) => {
       if (currentProof) {
         console.log('🔄 Atualizando pagamento:', currentProof.payment_id);
         
-        // Buscar dados completos do pagamento (incluindo id, group_id, category, profiles)
+        // Buscar dados completos do pagamento
+        // Primeiro buscar o pagamento
         const { data: paymentData, error: fetchError } = await supabase
           .from('payments')
-          .select('*, profiles:member_id(id, full_name, email)')
+          .select('*')
           .eq('id', currentProof.payment_id)
           .single();
+
+        if (fetchError) {
+          console.error('❌ Erro ao buscar pagamento:', fetchError);
+          throw fetchError;
+        }
+
+        // Buscar dados do perfil separadamente (caso member_id exista)
+        let memberProfile = null;
+        if (paymentData.member_id) {
+          const { data: profileData, error: profileError } = await supabase
+            .from('profiles')
+            .select('id, full_name, email')
+            .eq('id', paymentData.member_id)
+            .single();
+          
+          if (!profileError && profileData) {
+            memberProfile = profileData;
+          }
+        }
+
+        // Adicionar dados do perfil ao objeto paymentData
+        if (memberProfile) {
+          paymentData.profiles = memberProfile;
+        }
 
         if (fetchError) {
           console.error('❌ Erro ao buscar pagamento:', fetchError);
