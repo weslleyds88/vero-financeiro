@@ -11,7 +11,13 @@ import Expenses from './components/Expenses';
 import CalendarView from './components/CalendarView';
 import MemberView from './components/MemberView';
 import Settings from './components/Settings';
+import AdminPanel from './components/AdminPanel';
+import PaymentTickets from './components/PaymentTickets';
+import AthleteProfile from './components/AthleteProfile';
+import ForceChangePassword from './components/ForceChangePassword';
+import Notifications from './components/Notifications';
 import { getCurrentMonth, getCurrentMonthObj } from './utils/dateUtils';
+import { supabase } from './lib/supabaseClient';
 
 function AppContent() {
   const { isAuthenticated, isAdmin, login, logout, loading } = useAuth();
@@ -20,12 +26,38 @@ function AppContent() {
   const [payments, setPayments] = useState([]);
   const [currentMonth, setCurrentMonth] = useState(getCurrentMonth());
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
   const [filters, setFilters] = useState({
     member_id: '',
     status: '',
     category: '',
     month: getCurrentMonthObj()
   });
+
+  // Carregar usuário atual do Supabase se autenticado
+  useEffect(() => {
+    if (isAuthenticated && supabase) {
+      const loadCurrentUser = async () => {
+        try {
+          const { data: { user } } = await supabase.auth.getUser();
+          if (user) {
+            const { data: profile } = await supabase
+              .from('profiles')
+              .select('*')
+              .eq('id', user.id)
+              .single();
+            if (profile) {
+              setCurrentUser(profile);
+            }
+          }
+        } catch (error) {
+          console.error('Erro ao carregar usuário:', error);
+        }
+      };
+      loadCurrentUser();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated]);
 
   // Carregar dados iniciais apenas se autenticado
   useEffect(() => {
@@ -86,6 +118,31 @@ function AppContent() {
     return <Login onLogin={login} />;
   }
 
+  // Se precisa trocar senha, mostrar tela de troca obrigatória
+  if (currentUser?.must_change_password && supabase) {
+    return (
+      <ForceChangePassword
+        currentUser={currentUser}
+        onPasswordChanged={async () => {
+          // Recarregar dados do usuário após trocar senha
+          if (supabase) {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) {
+              const { data: profile } = await supabase
+                .from('profiles')
+                .select('*')
+                .eq('id', user.id)
+                .single();
+              if (profile) {
+                setCurrentUser(profile);
+              }
+            }
+          }
+        }}
+      />
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 flex">
       <Sidebar 
@@ -93,6 +150,7 @@ function AppContent() {
         onLogout={logout} 
         isOpen={isSidebarOpen}
         onClose={() => setIsSidebarOpen(false)}
+        currentUser={currentUser}
       />
       
       {/* Botão hambúrguer para mobile */}
@@ -105,6 +163,13 @@ function AppContent() {
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
         </svg>
       </button>
+
+      {/* Notificações */}
+      {currentUser && supabase && (
+        <div className="fixed top-4 right-4 z-30">
+          <Notifications supabase={supabase} currentUser={currentUser} />
+        </div>
+      )}
       
       <main className="flex-1 md:ml-64 pt-16 md:pt-0">
         <Routes>
@@ -119,6 +184,8 @@ function AppContent() {
                 onMonthChange={setCurrentMonth}
                 onRefresh={refreshData}
                 isAdmin={isAdmin}
+                supabase={supabase}
+                currentUser={currentUser}
               />
             }
           />
@@ -130,6 +197,7 @@ function AppContent() {
                 members={members}
                 onRefresh={refreshMembers}
                 isAdmin={isAdmin}
+                supabase={supabase}
               />
             }
           />
@@ -140,10 +208,10 @@ function AppContent() {
                 db={db}
                 members={members}
                 payments={payments}
-                filters={filters}
-                onFiltersChange={setFilters}
                 onRefresh={refreshPayments}
                 isAdmin={isAdmin}
+                supabase={supabase}
+                currentUser={currentUser}
               />
             }
           />
@@ -197,6 +265,50 @@ function AppContent() {
               />
             }
           />
+          <Route
+            path="/tickets"
+            element={
+              <PaymentTickets
+                supabase={supabase}
+                currentUser={currentUser}
+                isAdmin={isAdmin}
+              />
+            }
+          />
+          {isAdmin && (
+            <Route
+              path="/admin"
+              element={
+                <AdminPanel
+                  isAdmin={isAdmin}
+                  supabase={supabase}
+                />
+              }
+            />
+          )}
+          {!isAdmin && (
+            <Route
+              path="/profile"
+              element={
+                <AthleteProfile
+                  currentUser={currentUser}
+                  onUpdate={async () => {
+                    const { data: { user } } = await supabase.auth.getUser();
+                    if (user) {
+                      const { data: profile } = await supabase
+                        .from('profiles')
+                        .select('*')
+                        .eq('id', user.id)
+                        .single();
+                      if (profile) {
+                        setCurrentUser(profile);
+                      }
+                    }
+                  }}
+                />
+              }
+            />
+          )}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>

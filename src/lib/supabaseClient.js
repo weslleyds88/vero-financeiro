@@ -11,13 +11,17 @@ const supabaseUrl = process.env.REACT_APP_SUPABASE_URL;
 const supabaseAnonKey = process.env.REACT_APP_SUPABASE_ANON_KEY;
 
 if (!supabaseUrl || !supabaseAnonKey) {
-  console.error('Configurações do Supabase não encontradas!');
-  console.error('Certifique-se de configurar:');
-  console.error('- REACT_APP_SUPABASE_URL');
-  console.error('- REACT_APP_SUPABASE_ANON_KEY');
-  console.error('no arquivo .env.local');
+  console.warn('⚠️ Configurações do Supabase não encontradas!');
+  console.warn('📝 Para usar funcionalidades do Supabase, crie um arquivo .env.local na raiz do projeto com:');
+  console.warn('   REACT_APP_SUPABASE_URL=https://seu-projeto.supabase.co');
+  console.warn('   REACT_APP_SUPABASE_ANON_KEY=sua-chave-anon-aqui');
+  console.warn('💡 O app continuará funcionando em modo local sem essas configurações.');
 }
 
-export const supabase = createClient(supabaseUrl || '', supabaseAnonKey || '');
+// Criar cliente Supabase apenas se as credenciais estiverem disponíveis
+// Caso contrário, retornar null para que os componentes possam verificar
+export const supabase = (supabaseUrl && supabaseAnonKey) 
+  ? createClient(supabaseUrl, supabaseAnonKey)
+  : null;
 
 export default supabase;

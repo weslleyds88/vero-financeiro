@@ -161,7 +161,7 @@ const Settings = ({ db, members, payments, onRefresh }) => {
             </div>
             <div>
               <p className="font-medium text-gray-900">Versão</p>
-              <p className="text-sm text-gray-600">Aplicativo: Despesas Vero, v1.0.0</p>
+              <p className="text-sm text-gray-600">Aplicativo: Vero Clube, v1.0.0</p>
               <p className="text-xs text-gray-500">Sistema funcionando normalmente</p>
             </div>
           </div>

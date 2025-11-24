@@ -36,15 +36,29 @@ export function AuthProvider({ children }) {
     }
   }, [isAuthenticated, isAdmin, loading]);
 
-  const login = (adminMode) => {
+  const login = (adminMode, profile = null) => {
     setIsAuthenticated(true);
     setIsAdmin(adminMode);
+    // Salvar perfil se fornecido
+    if (profile) {
+      localStorage.setItem('userProfile', JSON.stringify(profile));
+    }
   };
 
-  const logout = () => {
+  const logout = async () => {
     setIsAuthenticated(false);
     setIsAdmin(false);
     localStorage.removeItem('auth');
+    localStorage.removeItem('userProfile');
+    // Fazer logout do Supabase se estiver configurado
+    try {
+      const { supabase } = await import('../lib/supabaseClient');
+      if (supabase) {
+        await supabase.auth.signOut();
+      }
+    } catch (error) {
+      // Ignorar erro se Supabase não estiver configurado
+    }
   };
 
   const value = {
