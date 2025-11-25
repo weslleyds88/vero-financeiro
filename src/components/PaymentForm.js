@@ -65,7 +65,7 @@ const PaymentForm = ({ payment, members, categories, groups = [], onSubmit, onCa
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-
+    
     if (type === 'checkbox') {
       setFormData(prev => ({
         ...prev,
@@ -96,13 +96,13 @@ const PaymentForm = ({ payment, members, categories, groups = [], onSubmit, onCa
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
+    
     if (!validateForm()) {
       return;
     }
 
     setIsSubmitting(true);
-
+    
     try {
       const submitData = {
         amount: parseFloat(formData.amount),
@@ -392,19 +392,19 @@ const PaymentForm = ({ payment, members, categories, groups = [], onSubmit, onCa
         </div>
 
         {/* Marcar como Pago */}
-        <div className="flex items-center">
-          <input
-            type="checkbox"
-            id="markAsPaid"
-            name="markAsPaid"
-            checked={formData.markAsPaid}
-            onChange={handleChange}
+          <div className="flex items-center">
+            <input
+              type="checkbox"
+              id="markAsPaid"
+              name="markAsPaid"
+              checked={formData.markAsPaid}
+              onChange={handleChange}
             className="mr-2"
-          />
+            />
           <label htmlFor="markAsPaid" className="text-sm">
-            Marcar como pago imediatamente
-          </label>
-        </div>
+              Marcar como pago imediatamente
+            </label>
+          </div>
 
         {/* Botões */}
         <div className="flex justify-end space-x-2 pt-4">

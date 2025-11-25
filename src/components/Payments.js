@@ -65,10 +65,10 @@ const Payments = ({ db, members, payments, onRefresh, isAdmin, supabase, current
   }, [supabase]);
 
   useEffect(() => {
-    if (isAdmin && supabase) {
+    if (supabase) {
       loadGroups();
     }
-  }, [isAdmin, loadGroups, supabase]);
+  }, [loadGroups, supabase]);
 
   // Filtrar pagamentos baseado na visão (admin vs atleta)
   const filteredPayments = useMemo(() => payments.filter(p => {
