@@ -40,8 +40,18 @@ const PaymentTickets = ({ supabase, currentUser, isAdmin = false }) => {
   const formatDate = (dateString) => {
     if (!dateString) return '';
     try {
-      // Criar data a partir da string ISO (que está em UTC)
-      const date = new Date(dateString);
+      // Garantir que a string seja interpretada como UTC
+      // Se não termina com 'Z' e não tem timezone, adicionar 'Z' para forçar UTC
+      let dateStr = dateString;
+      if (!dateStr.endsWith('Z') && !dateStr.includes('+') && !dateStr.includes('-', 10)) {
+        // Se é uma string ISO sem timezone (ex: "2025-12-10T23:02:16"), adicionar 'Z'
+        if (dateStr.includes('T')) {
+          dateStr = dateStr + 'Z';
+        }
+      }
+      
+      // Criar data a partir da string (agora garantidamente em UTC)
+      const date = new Date(dateStr);
       
       // Verificar se a data é válida
       if (isNaN(date.getTime())) {
@@ -49,7 +59,7 @@ const PaymentTickets = ({ supabase, currentUser, isAdmin = false }) => {
         return dateString;
       }
       
-      // Usar Intl.DateTimeFormat para converter corretamente de UTC para Brasília
+      // Usar Intl.DateTimeFormat que faz a conversão correta de UTC para Brasília
       const formatter = new Intl.DateTimeFormat('pt-BR', {
         timeZone: 'America/Sao_Paulo',
         day: '2-digit',

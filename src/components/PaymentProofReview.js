@@ -19,15 +19,6 @@ const PaymentProofReview = ({ supabase, currentUser, onClose }) => {
   // Função para criar ticket INDIVIDUAL por pagamento (não por cobrança completa)
   const createIndividualPaymentTicket = async (proofData, paymentData, adminUserId, isFullyPaid) => {
     try {
-      console.log('🎫 ========================================');
-      console.log('🎫 CRIANDO TICKET INDIVIDUAL PARA PAGAMENTO:', paymentData.id);
-      console.log('🎫 proofData COMPLETO:', proofData);
-      console.log('🎫 paymentData COMPLETO:', paymentData);
-      console.log('🎫 Valor deste pagamento (proof_amount):', proofData.proof_amount);
-      console.log('🎫 Valor total da cobrança (amount):', paymentData.amount);
-      console.log('🎫 Status:', isFullyPaid ? 'COMPLETO' : 'PARCIAL');
-      console.log('🎫 ========================================');
-
       // Buscar nome do grupo (se tiver)
       let groupName = null;
       if (paymentData.group_id) {
@@ -38,7 +29,6 @@ const PaymentProofReview = ({ supabase, currentUser, onClose }) => {
           .single();
         
         groupName = groupData?.name || null;
-        console.log('📋 Nome do grupo:', groupName);
       }
 
       // Criar ticket diretamente (sempre novo, nunca atualiza)
@@ -59,14 +49,6 @@ const PaymentProofReview = ({ supabase, currentUser, onClose }) => {
         expires_at: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString() // 60 dias em UTC
       };
 
-      console.log('📝 Dados do ticket:', {
-        payment_id: ticketData.payment_id,
-        category: ticketData.category,
-        group_name: ticketData.group_name,
-        amount: ticketData.amount,
-        payment_status: ticketData.payment_status
-      });
-
       // Criar novo ticket (sempre)
       const { data, error } = await supabase
         .from('payment_tickets')
@@ -76,8 +58,6 @@ const PaymentProofReview = ({ supabase, currentUser, onClose }) => {
 
       if (error) throw error;
 
-      console.log('✅✅✅ TICKET CRIADO COM SUCESSO! ID:', data.id);
-      console.log('🎫 ========================================');
       return data;
     } catch (error) {
       console.error('❌ Erro ao criar ticket:', error);
@@ -119,7 +99,6 @@ const PaymentProofReview = ({ supabase, currentUser, onClose }) => {
         throw error;
       }
 
-      console.log('📋 Comprovantes (metadados) carregados:', data?.length || 0);
 
       // Enriquecer com informações de grupo (campeonato)
       const proofsList = data || [];
@@ -168,7 +147,6 @@ const PaymentProofReview = ({ supabase, currentUser, onClose }) => {
 
       // Se página 0, substitui; senão, concatena
       setProofs(prev => (page === 0 ? processedProofs : [...prev, ...processedProofs]));
-      console.log('✅ Comprovantes processados (com grupos):', processedProofs.length);
     } catch (error) {
       console.error('❌ Erro ao carregar comprovantes:', error);
       setProofs([]);
@@ -205,7 +183,6 @@ const PaymentProofReview = ({ supabase, currentUser, onClose }) => {
       // 2. Atualizar o pagamento (pago total ou parcial)
       const currentProof = proofs.find(p => p.id === proofId);
       if (currentProof) {
-        console.log('🔄 Atualizando pagamento:', currentProof.payment_id);
         
         // Buscar dados completos do pagamento
         // Primeiro buscar o pagamento
@@ -253,14 +230,6 @@ const PaymentProofReview = ({ supabase, currentUser, onClose }) => {
         // Verificar se pagamento está completo
         const isFullyPaid = newPaidAmount >= totalAmount;
 
-        console.log('💰 Cálculo de pagamento:', {
-          totalAmount,
-          currentPaidAmount,
-          proofAmount,
-          newPaidAmount,
-          isFullyPaid
-        });
-        
         const { error: paymentError } = await supabase
           .from('payments')
           .update({
@@ -275,8 +244,6 @@ const PaymentProofReview = ({ supabase, currentUser, onClose }) => {
           throw paymentError;
         }
         
-        console.log(`✅ Pagamento atualizado: ${isFullyPaid ? 'PAGO INTEGRALMENTE' : 'PENDENTE (pagamento parcial)'} - R$ ${newPaidAmount.toFixed(2)} de R$ ${totalAmount.toFixed(2)}`);
-        
         // 3. Criar ticket SEMPRE (tanto parcial quanto completo)
         let ticketCreated = false;
         let ticketId = null;
@@ -284,7 +251,6 @@ const PaymentProofReview = ({ supabase, currentUser, onClose }) => {
         
         try {
           // Verificar se o usuário existe no sistema antes de criar ticket
-          console.log('🎫 Verificando usuário antes de criar ticket:', currentProof.user_id);
 
           const { data: userData, error: userError } = await supabase
             .from('profiles')
@@ -303,10 +269,8 @@ const PaymentProofReview = ({ supabase, currentUser, onClose }) => {
           let adminUserId = null;
           if (currentUser && currentUser.id) {
             adminUserId = currentUser.id;
-            console.log('✅ Usando currentUser como admin:', adminUserId);
           } else {
             // Buscar um admin do banco como fallback
-            console.log('🔄 currentUser não disponível, buscando admin do banco...');
             const { data: adminUser, error: adminError } = await supabase
               .from('profiles')
               .select('id')
@@ -316,14 +280,12 @@ const PaymentProofReview = ({ supabase, currentUser, onClose }) => {
 
             if (!adminError && adminUser) {
               adminUserId = adminUser.id;
-              console.log('✅ Admin encontrado no banco:', adminUserId);
             } else {
               throw new Error('Nenhum admin disponível para criar ticket');
             }
           }
 
           // BUSCAR IMAGEM E OBSERVAÇÃO DO COMPROVANTE antes de criar ticket
-          console.log('📸 Buscando imagem e observação do comprovante para o ticket...');
           const { data: proofWithImage, error: imageError } = await supabase
             .from('payment_proofs')
             .select('proof_image_base64, observation, payment_method')
@@ -343,18 +305,8 @@ const PaymentProofReview = ({ supabase, currentUser, onClose }) => {
           };
 
           // Criar ticket individual para este pagamento específico
-          console.log('🎫 Criando ticket individual para:', {
-            payment_id: currentProof.payment_id,
-            proof_amount: currentProof.proof_amount,
-            user_id: currentProof.user_id,
-            approved_by: adminUserId,
-            isFullyPaid: isFullyPaid,
-            hasImage: !!completeProofData.proof_image_base64
-          });
-
           ticketId = await createIndividualPaymentTicket(completeProofData, paymentData, adminUserId, isFullyPaid);
           ticketCreated = true;
-          console.log('✅✅✅ Ticket criado com sucesso! ID:', ticketId?.id || ticketId);
           
         } catch (ticketError) {
           console.error('❌ Erro ao criar ticket:', ticketError);
