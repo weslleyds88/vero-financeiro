@@ -1185,10 +1185,10 @@ const Payments = ({ db, members, payments, onRefresh, isAdmin, supabase, current
                     <p className="text-sm font-medium text-gray-600">Total de Grupos</p>
                     <p className="text-2xl font-bold text-gray-600">
                       {sortedAndFilteredPayments.filter(p => p.isGroupPayment).length}
-                    </p>
-                  </div>
-                </div>
+                </p>
               </div>
+            </div>
+          </div>
         </div>
           )}
         </>

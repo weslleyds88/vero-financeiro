@@ -278,134 +278,142 @@ const PaymentProofReview = ({ supabase, currentUser, onClose }) => {
         console.log(`✅ Pagamento atualizado: ${isFullyPaid ? 'PAGO INTEGRALMENTE' : 'PENDENTE (pagamento parcial)'} - R$ ${newPaidAmount.toFixed(2)} de R$ ${totalAmount.toFixed(2)}`);
         
         // 3. Criar ticket SEMPRE (tanto parcial quanto completo)
-        {
-          const proof = proofs.find(p => p.id === proofId);
-          if (proof) {
-            let ticketId = null;
-            try {
+        let ticketCreated = false;
+        let ticketId = null;
+        let userCheck = null;
+        
+        try {
           // Verificar se o usuário existe no sistema antes de criar ticket
-          console.log('🎫 Verificando usuário antes de criar ticket:', proof.user_id);
+          console.log('🎫 Verificando usuário antes de criar ticket:', currentProof.user_id);
 
-          const { data: userCheck, error: userError } = await supabase
+          const { data: userData, error: userError } = await supabase
             .from('profiles')
-            .select('id, full_name, email')
-            .eq('id', proof.user_id)
+            .select('id, full_name, email, role')
+            .eq('id', currentProof.user_id)
             .single();
 
-          if (userError || !userCheck) {
-            console.warn('⚠️ Usuário não encontrado no profiles:', proof.user_id);
-            // Continuar sem criar ticket se o usuário não existir
-          } else {
-            // Tentar criar ticket - se currentUser não estiver disponível, buscar um admin do banco
-            let adminUserId = null;
-
-            if (currentUser && currentUser.id) {
-              adminUserId = currentUser.id;
-            } else {
-              // Buscar um admin do banco como fallback
-              console.log('🔄 currentUser não disponível, buscando admin do banco...');
-              try {
-                const { data: adminUser, error: adminError } = await supabase
-                  .from('profiles')
-                  .select('id')
-                  .eq('role', 'admin')
-                  .limit(1)
-                  .single();
-
-                if (!adminError && adminUser) {
-                  adminUserId = adminUser.id;
-                  console.log('✅ Admin encontrado no banco:', adminUserId);
-                } else {
-                  console.warn('⚠️ Nenhum admin encontrado no banco, tentando buscar qualquer usuário...');
-                  // Fallback: buscar qualquer usuário como último recurso
-                  const { data: anyUser, error: anyError } = await supabase
-                    .from('profiles')
-                    .select('id')
-                    .limit(1)
-                    .single();
-
-                  if (!anyError && anyUser) {
-                    adminUserId = anyUser.id;
-                    console.log('⚠️ Usando usuário fallback para criar ticket:', adminUserId);
-                  } else {
-                    console.error('❌ Erro ao buscar qualquer usuário:', anyError);
-                  }
-                }
-              } catch (adminErr) {
-                console.warn('⚠️ Erro ao buscar admin:', adminErr);
-              }
-            }
-
-            if (adminUserId) {
-              // BUSCAR IMAGEM E OBSERVAÇÃO DO COMPROVANTE antes de criar ticket (otimização lazy loading)
-              console.log('📸 Buscando imagem e observação do comprovante para o ticket...');
-              const { data: proofWithImage, error: imageError } = await supabase
-                .from('payment_proofs')
-                .select('proof_image_base64, observation')
-                .eq('id', proofId)
-                .single();
-
-              if (imageError) {
-                console.warn('⚠️ Erro ao buscar imagem do comprovante:', imageError);
-              }
-
-              // Mesclar dados do comprovante com a imagem e observação
-              const completeProofData = {
-                ...currentProof,
-                proof_image_base64: proofWithImage?.proof_image_base64 || null,
-                observation: proofWithImage?.observation || null
-              };
-
-              // Criar ticket individual para este pagamento específico
-              console.log('🎫 Criando ticket individual para:', {
-                payment_id: currentProof.payment_id,
-                proof_amount: currentProof.proof_amount,
-                user_id: currentProof.user_id,
-                approved_by: adminUserId,
-                isFullyPaid: isFullyPaid,
-                hasImage: !!completeProofData.proof_image_base64
-              });
-
-              ticketId = await createIndividualPaymentTicket(completeProofData, paymentData, adminUserId, isFullyPaid);
-              console.log('✅ Ticket criado com sucesso:', ticketId);
-            } else {
-              console.warn('⚠️ Nenhum admin disponível para criar ticket, pulando...');
-            }
+          if (userError || !userData) {
+            console.warn('⚠️ Usuário não encontrado no profiles:', currentProof.user_id, userError);
+            throw new Error(`Usuário não encontrado: ${currentProof.user_id}`);
           }
-            } catch (ticketError) {
-              console.warn('⚠️ Erro ao criar ticket (não crítico):', ticketError.message || ticketError);
-              // Não falhar a aprovação se o ticket não for criado
-            }
 
-            // Criar notificação apenas se o usuário NÃO for admin
-            const { data: userProfile } = await supabase
+          userCheck = userData;
+
+          // Obter adminUserId (quem está aprovando)
+          let adminUserId = null;
+          if (currentUser && currentUser.id) {
+            adminUserId = currentUser.id;
+            console.log('✅ Usando currentUser como admin:', adminUserId);
+          } else {
+            // Buscar um admin do banco como fallback
+            console.log('🔄 currentUser não disponível, buscando admin do banco...');
+            const { data: adminUser, error: adminError } = await supabase
               .from('profiles')
-              .select('role')
-              .eq('id', proof.user_id)
+              .select('id')
+              .eq('role', 'admin')
+              .limit(1)
               .single();
 
-            if (userProfile?.role !== 'admin') {
-              const notificationTitle = isFullyPaid 
-                ? 'Pagamento Completo! 🎉' 
-                : 'Pagamento Parcial Aprovado';
-              
-              const notificationMessage = isFullyPaid
-                ? `Seu pagamento total de R$ ${totalAmount.toFixed(2)} foi aprovado! Ticket gerado com sucesso.`
-                : `Seu pagamento parcial de R$ ${proofAmount.toFixed(2)} foi aprovado! Total pago: R$ ${newPaidAmount.toFixed(2)} de R$ ${totalAmount.toFixed(2)}. Ticket gerado com sucesso.`;
-
-              await supabase
-                .from('notifications')
-                .insert({
-                  user_id: proof.user_id,
-                  title: notificationTitle,
-                  message: notificationMessage,
-                  type: 'success'
-                });
-              console.log(`✅ Notificação de pagamento ${isFullyPaid ? 'completo' : 'parcial'} criada para atleta`);
+            if (!adminError && adminUser) {
+              adminUserId = adminUser.id;
+              console.log('✅ Admin encontrado no banco:', adminUserId);
             } else {
-              console.log('ℹ️ Notificação não enviada (usuário é admin)');
+              throw new Error('Nenhum admin disponível para criar ticket');
             }
           }
+
+          // BUSCAR IMAGEM E OBSERVAÇÃO DO COMPROVANTE antes de criar ticket
+          console.log('📸 Buscando imagem e observação do comprovante para o ticket...');
+          const { data: proofWithImage, error: imageError } = await supabase
+            .from('payment_proofs')
+            .select('proof_image_base64, observation, payment_method')
+            .eq('id', proofId)
+            .single();
+
+          if (imageError) {
+            console.warn('⚠️ Erro ao buscar imagem do comprovante:', imageError);
+          }
+
+          // Mesclar dados do comprovante com a imagem e observação
+          const completeProofData = {
+            ...currentProof,
+            proof_image_base64: proofWithImage?.proof_image_base64 || null,
+            observation: proofWithImage?.observation || null,
+            payment_method: proofWithImage?.payment_method || currentProof.payment_method
+          };
+
+          // Criar ticket individual para este pagamento específico
+          console.log('🎫 Criando ticket individual para:', {
+            payment_id: currentProof.payment_id,
+            proof_amount: currentProof.proof_amount,
+            user_id: currentProof.user_id,
+            approved_by: adminUserId,
+            isFullyPaid: isFullyPaid,
+            hasImage: !!completeProofData.proof_image_base64
+          });
+
+          ticketId = await createIndividualPaymentTicket(completeProofData, paymentData, adminUserId, isFullyPaid);
+          ticketCreated = true;
+          console.log('✅✅✅ Ticket criado com sucesso! ID:', ticketId?.id || ticketId);
+          
+        } catch (ticketError) {
+          console.error('❌ Erro ao criar ticket:', ticketError);
+          // Não falhar a aprovação se o ticket não for criado, mas logar o erro
+          alert(`⚠️ Comprovante aprovado, mas houve um problema ao gerar o ticket: ${ticketError.message}`);
+        }
+
+        // 4. Criar notificações para o usuário e para o admin
+        try {
+          // Notificação para o usuário (atleta) - apenas se o usuário existir
+          if (userCheck && userCheck.role !== 'admin') {
+            const notificationTitle = isFullyPaid 
+              ? 'Pagamento Completo! 🎉' 
+              : 'Pagamento Parcial Aprovado';
+            
+            const notificationMessage = isFullyPaid
+              ? `Seu pagamento total de R$ ${totalAmount.toFixed(2)} foi aprovado!${ticketCreated ? ' Ticket gerado com sucesso.' : ''}`
+              : `Seu pagamento parcial de R$ ${proofAmount.toFixed(2)} foi aprovado! Total pago: R$ ${newPaidAmount.toFixed(2)} de R$ ${totalAmount.toFixed(2)}.${ticketCreated ? ' Ticket gerado com sucesso.' : ''}`;
+
+            const { error: userNotifError } = await supabase
+              .from('notifications')
+              .insert({
+                user_id: currentProof.user_id,
+                title: notificationTitle,
+                message: notificationMessage,
+                type: 'success'
+              });
+
+            if (userNotifError) {
+              console.warn('⚠️ Erro ao criar notificação para usuário:', userNotifError);
+            } else {
+              console.log(`✅ Notificação de pagamento ${isFullyPaid ? 'completo' : 'parcial'} criada para atleta`);
+            }
+          }
+
+          // Notificação para o admin (confirmando a aprovação)
+          if (currentUser && currentUser.id) {
+            const adminNotificationMessage = isFullyPaid
+              ? `Pagamento de R$ ${totalAmount.toFixed(2)} aprovado para ${userCheck?.full_name || 'usuário'}.${ticketCreated ? ' Ticket gerado.' : ''}`
+              : `Pagamento parcial de R$ ${proofAmount.toFixed(2)} aprovado para ${userCheck?.full_name || 'usuário'}. Total pago: R$ ${newPaidAmount.toFixed(2)} de R$ ${totalAmount.toFixed(2)}.${ticketCreated ? ' Ticket gerado.' : ''}`;
+
+            const { error: adminNotifError } = await supabase
+              .from('notifications')
+              .insert({
+                user_id: currentUser.id,
+                title: 'Pagamento Aprovado',
+                message: adminNotificationMessage,
+                type: 'success'
+              });
+
+            if (adminNotifError) {
+              console.warn('⚠️ Erro ao criar notificação para admin:', adminNotifError);
+            } else {
+              console.log('✅ Notificação de aprovação criada para admin');
+            }
+          }
+        } catch (notifError) {
+          console.warn('⚠️ Erro ao criar notificações:', notifError);
+          // Não falhar a aprovação por causa de notificações
         }
       }
 
