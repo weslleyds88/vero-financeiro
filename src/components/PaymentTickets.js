@@ -49,9 +49,8 @@ const PaymentTickets = ({ supabase, currentUser, isAdmin = false }) => {
         return dateString;
       }
       
-      // Formatar diretamente no horário de Brasília (UTC-3)
-      // O toLocaleString converte automaticamente de UTC para o timezone especificado
-      return date.toLocaleString('pt-BR', {
+      // Usar Intl.DateTimeFormat para converter corretamente de UTC para Brasília
+      const formatter = new Intl.DateTimeFormat('pt-BR', {
         timeZone: 'America/Sao_Paulo',
         day: '2-digit',
         month: '2-digit',
@@ -61,6 +60,8 @@ const PaymentTickets = ({ supabase, currentUser, isAdmin = false }) => {
         second: '2-digit',
         hour12: false
       });
+      
+      return formatter.format(date);
     } catch (error) {
       console.error('Erro ao formatar data:', error, dateString);
       return dateString;
