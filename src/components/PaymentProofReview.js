@@ -246,7 +246,6 @@ const PaymentProofReview = ({ supabase, currentUser, onClose }) => {
         
         // 3. Criar ticket SEMPRE (tanto parcial quanto completo)
         let ticketCreated = false;
-        let ticketId = null;
         let userCheck = null;
         
         try {
@@ -305,7 +304,7 @@ const PaymentProofReview = ({ supabase, currentUser, onClose }) => {
           };
 
           // Criar ticket individual para este pagamento específico
-          ticketId = await createIndividualPaymentTicket(completeProofData, paymentData, adminUserId, isFullyPaid);
+          await createIndividualPaymentTicket(completeProofData, paymentData, adminUserId, isFullyPaid);
           ticketCreated = true;
           
         } catch (ticketError) {
