@@ -1,7 +1,8 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import Notifications from './Notifications';
 
-const Sidebar = ({ isAdmin, onLogout, isOpen, onClose, currentUser }) => {
+const Sidebar = ({ isAdmin, onLogout, isOpen, onClose, currentUser, supabase }) => {
   const location = useLocation();
 
   const menuItems = [
@@ -110,8 +111,17 @@ const Sidebar = ({ isAdmin, onLogout, isOpen, onClose, currentUser }) => {
         isOpen ? 'translate-x-0' : '-translate-x-full'
       } md:translate-x-0`}>
       <div className="p-6 border-b border-gray-200">
-        <h1 className="text-xl font-bold text-gray-900">Vero Clube</h1>
-        <p className="text-sm text-gray-500 mt-1">Vero Volei</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-xl font-bold text-gray-900">Vero Clube</h1>
+            <p className="text-sm text-gray-500 mt-1">Vero Volei</p>
+          </div>
+          {currentUser && supabase && (
+            <div className="ml-4">
+              <Notifications supabase={supabase} currentUser={currentUser} />
+            </div>
+          )}
+        </div>
       </div>
       
       <nav className="mt-6">

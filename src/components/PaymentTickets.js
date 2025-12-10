@@ -39,17 +39,32 @@ const PaymentTickets = ({ supabase, currentUser, isAdmin = false }) => {
 
   const formatDate = (dateString) => {
     if (!dateString) return '';
-    // Converter UTC para horário local do Brasil
-    const date = new Date(dateString);
-    return date.toLocaleString('pt-BR', {
-      timeZone: 'America/Sao_Paulo',
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit'
-    });
+    try {
+      // Criar data a partir da string ISO (que está em UTC)
+      const date = new Date(dateString);
+      
+      // Verificar se a data é válida
+      if (isNaN(date.getTime())) {
+        console.warn('Data inválida:', dateString);
+        return dateString;
+      }
+      
+      // Formatar diretamente no horário de Brasília (UTC-3)
+      // O toLocaleString converte automaticamente de UTC para o timezone especificado
+      return date.toLocaleString('pt-BR', {
+        timeZone: 'America/Sao_Paulo',
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false
+      });
+    } catch (error) {
+      console.error('Erro ao formatar data:', error, dateString);
+      return dateString;
+    }
   };
 
   const getDaysRemaining = (days) => {

@@ -15,7 +15,6 @@ import AdminPanel from './components/AdminPanel';
 import PaymentTickets from './components/PaymentTickets';
 import AthleteProfile from './components/AthleteProfile';
 import ForceChangePassword from './components/ForceChangePassword';
-import Notifications from './components/Notifications';
 import { getCurrentMonth, getCurrentMonthObj } from './utils/dateUtils';
 import { supabase } from './lib/supabaseClient';
 
@@ -151,6 +150,7 @@ function AppContent() {
         isOpen={isSidebarOpen}
         onClose={() => setIsSidebarOpen(false)}
         currentUser={currentUser}
+        supabase={supabase}
       />
       
       {/* Botão hambúrguer para mobile */}
@@ -163,13 +163,6 @@ function AppContent() {
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
         </svg>
       </button>
-
-      {/* Notificações - Posicionado para não sobrepor os botões do header */}
-      {currentUser && supabase && (
-        <div className="fixed top-20 right-4 z-40 md:top-20">
-          <Notifications supabase={supabase} currentUser={currentUser} />
-        </div>
-      )}
       
       <main className="flex-1 md:ml-64 pt-16 md:pt-0">
         <Routes>
