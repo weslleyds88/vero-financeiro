@@ -2,7 +2,6 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { formatCurrency } from '../utils/dateUtils';
 import ExportButtons from './ExportButtons';
-import Notifications from './Notifications';
 
 const Dashboard = ({ db, members, payments, currentMonth, onMonthChange, onRefresh, isAdmin, supabase, currentUser }) => {
   // Estados para filtros independentes de mês e ano
@@ -336,13 +335,6 @@ const Dashboard = ({ db, members, payments, currentMonth, onMonthChange, onRefre
           </div>
         </div>
         <div className="flex items-center space-x-4">
-          {currentUser && supabase && (
-            <Notifications
-              supabase={supabase}
-              currentUser={currentUser}
-              isVisible={!!currentUser}
-            />
-          )}
           {isAdmin && (
             <>
               <ExportButtons

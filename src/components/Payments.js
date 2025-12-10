@@ -4,7 +4,6 @@ import PaymentProofModal from './PaymentProofModal';
 import PaymentProofReview from './PaymentProofReview';
 import SelectPaymentModal from './SelectPaymentModal';
 import ExportButtons from './ExportButtons';
-import Notifications from './Notifications';
 import { formatDate, formatCurrency } from '../utils/dateUtils';
 
 const Payments = ({ db, members, payments, onRefresh, isAdmin, supabase, currentUser }) => {
@@ -637,13 +636,6 @@ const Payments = ({ db, members, payments, onRefresh, isAdmin, supabase, current
           </p>
         </div>
         <div className="flex items-center space-x-3">
-          {currentUser && supabase && (
-            <Notifications
-              supabase={supabase}
-              currentUser={currentUser}
-              isVisible={true}
-            />
-          )}
           {isAdmin && (
             <>
               <button
