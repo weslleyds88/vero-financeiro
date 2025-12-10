@@ -86,11 +86,11 @@ function Login({ onLogin }) {
       }
     } else {
       // Modo local (fallback)
-      if (username === 'admin' && password === 'admin123') {
-        onLogin(true);
-        setError('');
-      } else {
-        setError('Usuário ou senha incorretos');
+    if (username === 'admin' && password === 'admin123') {
+      onLogin(true);
+      setError('');
+    } else {
+      setError('Usuário ou senha incorretos');
       }
       setLoading(false);
     }
@@ -156,26 +156,26 @@ function Login({ onLogin }) {
               </>
             ) : (
               <>
-                <div>
-                  <label className="label">Usuário</label>
-                  <input
-                    type="text"
-                    className="input"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                    placeholder="Digite o usuário"
-                  />
-                </div>
-                <div>
-                  <label className="label">Senha</label>
-                  <input
-                    type="password"
-                    className="input"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Digite a senha"
-                  />
-                </div>
+            <div>
+              <label className="label">Usuário</label>
+              <input
+                type="text"
+                className="input"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                placeholder="Digite o usuário"
+              />
+            </div>
+            <div>
+              <label className="label">Senha</label>
+              <input
+                type="password"
+                className="input"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Digite a senha"
+              />
+            </div>
               </>
             )}
 
@@ -220,17 +220,17 @@ function Login({ onLogin }) {
           )}
 
           {!useSupabase && (
-            <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
-              <button
-                onClick={handleViewMode}
-                className="btn-secondary w-full py-3 touch-manipulation"
-              >
-                👁️ Entrar em Modo Visualização
-              </button>
-              <p className="text-sm text-gray-500 dark:text-gray-400 text-center mt-3">
-                Modo visualização: apenas consulta, sem edições
-              </p>
-            </div>
+          <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+            <button
+              onClick={handleViewMode}
+              className="btn-secondary w-full py-3 touch-manipulation"
+            >
+              👁️ Entrar em Modo Visualização
+            </button>
+            <p className="text-sm text-gray-500 dark:text-gray-400 text-center mt-3">
+              Modo visualização: apenas consulta, sem edições
+            </p>
+          </div>
           )}
         </div>
       </div>

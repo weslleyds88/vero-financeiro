@@ -164,9 +164,9 @@ function AppContent() {
         </svg>
       </button>
 
-      {/* Notificações */}
+      {/* Notificações - Posicionado para não sobrepor os botões do header */}
       {currentUser && supabase && (
-        <div className="fixed top-4 right-4 z-30">
+        <div className="fixed top-20 right-4 z-40 md:top-20">
           <Notifications supabase={supabase} currentUser={currentUser} />
         </div>
       )}

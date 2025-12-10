@@ -55,8 +55,8 @@ const PaymentProofReview = ({ supabase, currentUser, onClose }) => {
         observation: proofData.observation || null, // Observação do atleta
         proof_image_base64: proofData.proof_image_base64, // 1 comprovante por ticket
         approved_by: adminUserId,
-        approved_at: new Date().toISOString(),
-        expires_at: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString() // 60 dias
+        approved_at: new Date().toISOString(), // Salva em UTC (padrão do banco)
+        expires_at: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString() // 60 dias em UTC
       };
 
       console.log('📝 Dados do ticket:', {
